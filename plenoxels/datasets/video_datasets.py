@@ -106,9 +106,8 @@ class VideoEndoDataset(BaseDataset):
                     )
                 # poses = torch.cat(poses, 0)
                 imgs = torch.cat(imgs, 0)
-                # median_imgs = torch.stack(median_imgs, 0) 
                 self.poses = torch.from_numpy(poses).float()
-                print(poses.shape)
+                self.median_imgs = torch.zeros((1,intrinsics.height,intrinsics.width,3))
                 timestamps = torch.linspace(0, 299, 156)
                 self.per_cam_near_fars = torch.Tensor([[0,100]])
                 # timestamps = torch.cat(timestamps, 0)
@@ -124,7 +123,6 @@ class VideoEndoDataset(BaseDataset):
             timestamps = (timestamps.float() / 299) * 2 - 1
         else:
             raise ValueError(datadir)
-
         self.timestamps = timestamps
         if split == 'train':
             self.timestamps = self.timestamps[:, None, None].repeat(
