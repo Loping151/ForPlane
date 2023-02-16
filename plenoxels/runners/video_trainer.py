@@ -229,7 +229,7 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
 
 
 def init_ts_data(data_dir, split, **kwargs):
-    if 'dnerf' in data_dir:
+    if 'dnerf' or 'endo' in data_dir:
         downsample = 1.0
     else:
         downsample = 2.0

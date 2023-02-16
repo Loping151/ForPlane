@@ -70,6 +70,9 @@ def init_trainer(model_type: str, **kwargs):
     if model_type == "video":
         from plenoxels.runners import video_trainer
         return video_trainer.VideoTrainer(**kwargs)
+    elif model_type == "endovideo":
+        from plenoxels.runners import video_trainer
+        return video_trainer.VideoTrainer(**kwargs) # in fact, endo dataset still uses video trainer.
     elif model_type == "phototourism":
         from plenoxels.runners import phototourism_trainer
         return phototourism_trainer.PhototourismTrainer(**kwargs)

@@ -1,0 +1,8 @@
+.vscode
+data
+logs
+*.pyc
+*.png
+*.jpg
+
+*.ipynb_checkpoints

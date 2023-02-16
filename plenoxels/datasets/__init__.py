@@ -1,6 +1,6 @@
 from .llff_dataset import LLFFDataset
 from .synthetic_nerf_dataset import SyntheticNerfDataset
-from .video_datasets import Video360Dataset
+from .video_datasets import Video360Dataset, VideoEndoDataset
 from .phototourism_dataset import PhotoTourismDataset
 
 __all__ = (
@@ -8,4 +8,5 @@ __all__ = (
     "SyntheticNerfDataset",
     "Video360Dataset",
     "PhotoTourismDataset",
+    "VideoEndoDataset"
 )

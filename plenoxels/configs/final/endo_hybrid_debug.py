@@ -1,5 +1,5 @@
 config = {
- 'expname': 'endo_train',
+ 'expname': 'debug_endo',
  'logdir': './logs/endo_example_x',
  'device': 'cuda:0',
 
@@ -18,8 +18,8 @@ config = {
  'near_scaling': 0.95,
 
  # Optimization settings
- 'num_steps': 5001,
- 'batch_size': 32768,
+ 'num_steps': 10000,
+ 'batch_size': 16384,
  'scheduler_type': 'warmup_cosine',
  'optim_type': 'adam',
  'lr': 0.01,
@@ -35,8 +35,8 @@ config = {
  'time_smoothness_weight_proposal_net': 0.0001,
 
  # Training settings
- 'valid_every': 3000,
- 'save_every': 3000,
+ 'valid_every': 1000,
+ 'save_every': 1000,
  'save_outputs': True,
  'train_fp16': True,
 
@@ -48,8 +48,8 @@ config = {
  'use_same_proposal_network': False,
  'use_proposal_weight_anneal': True,
  'proposal_net_args_list': [
-  {'num_input_coords': 4, 'num_output_coords': 8, 'resolution': [128, 128, 128, 156]},
-  {'num_input_coords': 4, 'num_output_coords': 8, 'resolution': [256, 256, 256, 156]}
+  {'num_input_coords': 4, 'num_output_coords': 8, 'resolution': [128, 128, 128, 150]},
+  {'num_input_coords': 4, 'num_output_coords': 8, 'resolution': [256, 256, 256, 150]}
  ],
 #  'max_train_tsteps': 100000, 
 

@@ -77,9 +77,7 @@ class VideoEndoDataset(BaseDataset):
                 imgs = None
             else:
                 _, _, intrinsics = load_llff_poses_helper(datadir, self.downsample, self.near_scaling)
-                poses_bounds = np.load(os.path.join(datadir, 'poses_bounds.npy'))  # (N_images, 17)
-                poses = np.eye(4)
-                poses = np.array([poses]*156)
+
                 # per_cam_poses, per_cam_near_fars, intrinsics, videopaths = load_llffvideo_poses(
                 #     datadir, downsample=self.downsample, split=split, near_scaling=self.near_scaling)
                 if split == 'test':
@@ -87,29 +85,50 @@ class VideoEndoDataset(BaseDataset):
                 # poses, imgs, timestamps, self.median_imgs = load_llffvideo_data(
                 #     videopaths=videopaths, cam_poses=per_cam_poses, intrinsics=intrinsics,
                 #     split=split, keyframes=keyframes, keyframes_take_each=30)
-                data_dir='/home/loping151/Desktop/K-Planes/data/endonerf' # 手动改的
+
+                ### load images 
+                data_dir='/home/yangchen/projects/kplanes-endo/data/endonerf'
                 paths = []
                 png_cnt = 0
                 str_cnt = '/000000.png'
+
+                poses_arr = np.load(os.path.join(data_dir, 'poses_bounds.npy'))
+                poses = poses_arr[:, :-2].reshape([-1, 3, 5]).transpose([1,2,0])
+                bds = poses_arr[:, -2:].transpose([1,0])
+                # Find a reasonable "focus depth" for this dataset
+                close_depth, inf_depth = bds.min()*.9, bds.max()*5.
+                dt = .75
+                mean_dz = 1./(((1.-dt)/(close_depth + 1e-6) + dt/(inf_depth + 1e-6)) + 1e-6)
+                focal = mean_dz
+                hwf = poses[:,-1,-1]
+                intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
+
                 while os.path.exists(data_dir+str_cnt):
                     paths.append(data_dir+str_cnt)
                     png_cnt += 1
                     str_cnt = '/' + '0'*(6-len(str(png_cnt))) + str(png_cnt) + '.png'
+
                 imgs = parallel_load_images(
                     data_dir=data_dir,
                     dset_type=dset_type,
                     tqdm_title=f"Loading {split} data",
-                    num_images=156, # Need to be modifieds
+                    num_images=len(paths), # Need to be modifieds
                     paths=paths,
                     out_h=intrinsics.height,
                     out_w=intrinsics.width,
                     )
+                
+                ### generate dummy pose
+                self.poses = torch.stack([torch.eye(4)] * len(paths)).float()
+
                 # poses = torch.cat(poses, 0)
                 imgs = torch.cat(imgs, 0)
-                self.poses = torch.from_numpy(poses).float()
+
                 self.median_imgs = torch.zeros((1,intrinsics.height,intrinsics.width,3))
-                timestamps = torch.linspace(0, 299, 156)
-                self.per_cam_near_fars = torch.Tensor([[0,100]])
+                timestamps = torch.linspace(0, 299, len(paths))
+
+                # bds, torch.Size([1, 2])
+                self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:
                 #     self.per_cam_near_fars = per_cam_near_fars.float()
@@ -123,7 +142,9 @@ class VideoEndoDataset(BaseDataset):
             timestamps = (timestamps.float() / 299) * 2 - 1
         else:
             raise ValueError(datadir)
+        
         self.timestamps = timestamps
+        
         if split == 'train':
             self.timestamps = self.timestamps[:, None, None].repeat(
                 1, intrinsics.height, intrinsics.width).reshape(-1)  # [n_frames * h * w]
