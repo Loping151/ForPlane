@@ -9,6 +9,14 @@ from PIL import Image
 import logging as log
 import numpy as np
 import imageio.v3 as iio
+import imageio
+
+# Define the modified to8b function
+def to8b(x: np.ndarray) -> np.ndarray:
+    if np.issubdtype(x.dtype, np.integer):
+        return x
+    else:
+        return (255 * np.clip(x, 0, 1)).astype(np.uint8)
 
 
 def write_png(path, data):
@@ -53,7 +61,7 @@ def glob_imgs(path, exts=None):
     return imgs
 
 
-def write_video_to_file(file_name, frames: List[np.ndarray]):
+def write_video_to_file_cv2(file_name, frames: List[np.ndarray]):
     log.info(f"Saving video ({len(frames)} frames) to {file_name}")
     # Photo tourism image sizes differ
     sizes = np.array([frame.shape[:2] for frame in frames])
@@ -82,6 +90,43 @@ def write_video_to_file(file_name, frames: List[np.ndarray]):
             video.write(image[:, :, ::-1])  # opencv uses BGR instead of RGB
         cv2.destroyAllWindows()
         video.release()
+
+
+def write_video_to_file(file_name, frames: List[np.ndarray]):
+    log.info(f"Saving video ({len(frames)} frames) to {file_name}")
+    # Photo tourism image sizes differ
+    sizes = np.array([frame.shape[:2] for frame in frames])
+    same_size_frames = np.unique(sizes, axis=0).shape[0] == 1
+    if same_size_frames:
+        height, width = frames[0].shape[:2]
+        video = np.zeros((len(frames), height, width, 3), dtype=np.uint8)
+        for i, img in enumerate(frames):
+            if isinstance(img, torch.Tensor):
+                img = img.numpy()
+            video[i] = img # [:, :, ::-1]  imageio uses RGB instead of BGR
+        imageio.mimwrite(
+            file_name,
+            to8b(video),
+            fps=30,
+            quality=8
+        )
+    else:
+        height = sizes[:, 0].max()
+        width = sizes[:, 1].max()
+        video = np.zeros((len(frames), height, width, 3), dtype=np.uint8)
+        for i, img in enumerate(frames):
+            h, w = img.shape[:2]
+            if isinstance(img, torch.Tensor):
+                img = img.numpy()
+            video_frame = np.zeros((height, width, 3), dtype=np.uint8)
+            video_frame[(height-h)//2:(height-h)//2+h, (width-w)//2:(width-w)//2+w, :] = img # use imageio instead
+            video[i] = video_frame
+        imageio.mimwrite(
+            file_name,
+            to8b(video),
+            fps=30,
+            quality=8
+        )
 
 
 def read_mp4(file_name: str) -> List[torch.Tensor]:

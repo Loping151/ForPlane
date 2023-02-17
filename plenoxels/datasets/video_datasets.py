@@ -62,7 +62,8 @@ class VideoEndoDataset(BaseDataset):
         if dset_type == "llff":
             # TODO 主要的改动是在这里，里面可能混了一些之前其他该法的遗迹。config里endo=True会进这个类，原本的里面揉杂了全景相机和合成数据集的方法。
             # PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endo_hybrid.py 
-            if split == "render":
+            # if split == "render":
+            if False: # always use all data
                 assert ndc, "Unable to generate render poses without ndc: don't know near-far."
                 # per_cam_poses, per_cam_near_fars, intrinsics, _ = load_llffvideo_poses(
                 #     datadir, downsample=self.downsample, split='all', near_scaling=self.near_scaling)
@@ -77,6 +78,16 @@ class VideoEndoDataset(BaseDataset):
                 imgs = None
             else:
                 _, _, intrinsics = load_llff_poses_helper(datadir, self.downsample, self.near_scaling)
+                poses_arr = np.load(os.path.join(datadir, 'poses_bounds.npy'))
+                poses = poses_arr[:, :-2].reshape([-1, 3, 5]).transpose([1,2,0])
+                bds = poses_arr[:, -2:].transpose([1,0])
+                # Find a reasonable "focus depth" for this dataset
+                close_depth, inf_depth = bds.min()*.9, bds.max()*5.
+                dt = .75
+                mean_dz = 1./(((1.-dt)/(close_depth + 1e-6) + dt/(inf_depth + 1e-6)) + 1e-6)
+                focal = mean_dz
+                hwf = poses[:,-1,-1]
+                intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
 
                 # per_cam_poses, per_cam_near_fars, intrinsics, videopaths = load_llffvideo_poses(
                 #     datadir, downsample=self.downsample, split=split, near_scaling=self.near_scaling)
@@ -87,21 +98,10 @@ class VideoEndoDataset(BaseDataset):
                 #     split=split, keyframes=keyframes, keyframes_take_each=30)
 
                 ### load images 
-                data_dir='/home/yangchen/projects/kplanes-endo/data/endonerf'
+                data_dir=os.path.join(datadir, 'images')
                 paths = []
                 png_cnt = 0
                 str_cnt = '/000000.png'
-
-                poses_arr = np.load(os.path.join(data_dir, 'poses_bounds.npy'))
-                poses = poses_arr[:, :-2].reshape([-1, 3, 5]).transpose([1,2,0])
-                bds = poses_arr[:, -2:].transpose([1,0])
-                # Find a reasonable "focus depth" for this dataset
-                close_depth, inf_depth = bds.min()*.9, bds.max()*5.
-                dt = .75
-                mean_dz = 1./(((1.-dt)/(close_depth + 1e-6) + dt/(inf_depth + 1e-6)) + 1e-6)
-                focal = mean_dz
-                hwf = poses[:,-1,-1]
-                intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
 
                 while os.path.exists(data_dir+str_cnt):
                     paths.append(data_dir+str_cnt)

@@ -6,3 +6,6 @@ logs
 *.jpg
 
 *.ipynb_checkpoints
+scripts
+# Ignore all files in the scripts directory
+scripts/*
