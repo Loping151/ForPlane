@@ -42,7 +42,8 @@ def _load_llff_image(idx: int,
                      out_h: int,
                      out_w: int,
                      ) -> torch.Tensor:
-    f_path = os.path.join(data_dir, paths[idx])
+    # f_path = os.path.join(data_dir, paths[idx])
+    f_path = paths[idx]
     img = Image.open(f_path).convert('RGB')
 
     img = img.resize((out_w, out_h), Image.LANCZOS)

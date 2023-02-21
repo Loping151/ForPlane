@@ -84,7 +84,7 @@ class BaseTrainer(abc.ABC):
             # Regularization
             loss = recon_loss
             for r in self.regularizers:
-                reg_loss = r.regularize(self.model, model_out=fwd_out)
+                reg_loss = r.regularize(self.model, model_out=fwd_out, data=data)
                 loss = loss + reg_loss
             self.timer.check("regularizaion-forward")
         # Update weights
@@ -181,6 +181,8 @@ class BaseTrainer(abc.ABC):
         data["near_fars"] = data["near_fars"].to(self.device)
         if "timestamps" in data:
             data["timestamps"] = data["timestamps"].to(self.device)
+        if 'depths' in data:
+            data['depths'] = data['depths'].to(self.device)
         bg_color = data["bg_color"]
         if isinstance(bg_color, torch.Tensor):
             bg_color = bg_color.to(self.device)

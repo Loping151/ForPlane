@@ -186,7 +186,7 @@ class VideoTrainer(BaseTrainer):
             TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
             HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
             DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
-            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0)),
+            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), delta=0.2), # temp use 0.2 for huber
         ]
 
     @property

@@ -198,13 +198,13 @@ class DepthTV(Regularizer):
         return tv
 
 class DepthLossHuber(Regularizer):
-    def __init__(self, delta: float, initial_value: float):
+    def __init__(self, initial_value: float, delta: float=0.2):
         super().__init__('huber-depth', initial_value)
         self.delta = delta
 
     def _regularize(self, model: LowrankModel, model_out, **kwargs) -> torch.Tensor:
         depth = model_out['depth']
-        target_depth = kwargs['target_depth']
+        target_depth = kwargs['data']['depths']
         # get valid mask
         valid_mask = target_depth > 0
         return F.huber_loss(depth[valid_mask], target_depth[valid_mask], delta=self.delta)
