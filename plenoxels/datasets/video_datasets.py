@@ -5,15 +5,15 @@ import math
 import os
 import time
 from collections import defaultdict
-from typing import Optional, List, Tuple, Any, Dict
+from typing import Optional, List, Tuple, Any, Dict, Union
 
 import numpy as np
 import torch
 
 from .base_dataset import BaseDataset
-from .data_loading import parallel_load_images
+from .data_loading import parallel_load_images, parallel_load_endo_depth, parallel_load_endo_mask
 from .intrinsics import Intrinsics
-from .llff_dataset import load_llff_poses_helper
+from .llff_dataset import load_llff_poses_helper, load_endo_pose_helper
 from .ray_utils import (
     generate_spherical_poses, create_meshgrid, stack_camera_dirs, get_rays, generate_spiral_path
 )
@@ -54,6 +54,7 @@ class VideoEndoDataset(BaseDataset):
         self.near_scaling = near_scaling
         self.ndc_far = ndc_far
         self.median_imgs = None
+
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
         dset_type = "llff"
@@ -77,17 +78,7 @@ class VideoEndoDataset(BaseDataset):
                 timestamps = torch.linspace(0, 299, len(self.poses))
                 imgs = None
             else:
-                _, _, intrinsics = load_llff_poses_helper(datadir, self.downsample, self.near_scaling)
-                poses_arr = np.load(os.path.join(datadir, 'poses_bounds.npy'))
-                poses = poses_arr[:, :-2].reshape([-1, 3, 5]).transpose([1,2,0])
-                bds = poses_arr[:, -2:].transpose([1,0])
-                # Find a reasonable "focus depth" for this dataset
-                close_depth, inf_depth = bds.min()*.9, bds.max()*5.
-                dt = .75
-                mean_dz = 1./(((1.-dt)/(close_depth + 1e-6) + dt/(inf_depth + 1e-6)) + 1e-6)
-                focal = mean_dz
-                hwf = poses[:,-1,-1]
-                intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
+                intrinsics = load_endo_pose_helper(datadir, self.downsample, self.near_scaling)
 
                 # per_cam_poses, per_cam_near_fars, intrinsics, videopaths = load_llffvideo_poses(
                 #     datadir, downsample=self.downsample, split=split, near_scaling=self.near_scaling)
@@ -98,43 +89,72 @@ class VideoEndoDataset(BaseDataset):
                 #     split=split, keyframes=keyframes, keyframes_take_each=30)
 
                 ### load images 
-                data_dir=os.path.join(datadir, 'images')
-                paths = []
+                paths_img, paths_mask, paths_depth = [], [], []
                 png_cnt = 0
                 str_cnt = '/000000.png'
 
-                while os.path.exists(data_dir+str_cnt):
-                    paths.append(data_dir+str_cnt)
+                while os.path.exists(datadir + "/images" + str_cnt):
+                    paths_img.append(datadir + "/images" + str_cnt)
+                    paths_mask.append(datadir + "/masks" + str_cnt)
+                    paths_depth.append(datadir + "/depth" + str_cnt)
                     png_cnt += 1
                     str_cnt = '/' + '0'*(6-len(str(png_cnt))) + str(png_cnt) + '.png'
 
+                assert len(paths_img) == len(paths_mask) == len(paths_depth), "The lists must have the same length."
+
                 imgs = parallel_load_images(
-                    data_dir=data_dir,
+                    data_dir=datadir,
                     dset_type=dset_type,
                     tqdm_title=f"Loading {split} data",
-                    num_images=len(paths), # Need to be modifieds
-                    paths=paths,
+                    num_images=len(paths_img), # Need to be modifieds
+                    paths=paths_img,
                     out_h=intrinsics.height,
                     out_w=intrinsics.width,
                     )
-                
-                ### generate dummy pose
-                self.poses = torch.stack([torch.eye(4)] * len(paths)).float()
 
-                # poses = torch.cat(poses, 0)
-                imgs = torch.cat(imgs, 0)
+                # for endonerf dataset, we need load mask and depth
+                masks = parallel_load_endo_mask(
+                    data_dir=datadir,
+                    tqdm_title=f"Loading {split} data",
+                    num_images=len(paths_mask), # Need to be modifieds
+                    paths=paths_mask,
+                    out_h=intrinsics.height,
+                    out_w=intrinsics.width,
+                    )
+                depths = parallel_load_endo_depth(
+                    data_dir=datadir,
+                    tqdm_title=f"Loading {split} data",
+                    num_images=len(paths_depth), # Need to be modifieds
+                    paths=paths_depth,
+                    out_h=intrinsics.height,
+                    out_w=intrinsics.width,
+                    )
+
+                imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [imgs, masks, depths]]
+                # we use near and far to normalize depth
+                self.close_depth = percentile_torch(self.depths, 3)
+                self.inf_depth = percentile_torch(self.depths, 99.9)
+                # values larger than inf_depth should be regarded as unreliable, use 0 to replace them
+                self.depths[self.depths > self.inf_depth] = 0
+                # pre norm depth to be in [0, 1]
+                self.depths = (self.depths - self.close_depth) / (self.inf_depth - self.close_depth + torch.finfo(self.depths.dtype).eps)
+
+                ### generate dummy pose
+                self.poses = torch.stack([torch.eye(4)] * len(paths_img)).float()
 
                 self.median_imgs = torch.zeros((1,intrinsics.height,intrinsics.width,3))
-                timestamps = torch.linspace(0, 299, len(paths))
+                timestamps = torch.linspace(0, 299, len(paths_img))
 
                 # bds, torch.Size([1, 2])
                 self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
+
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:
                 #     self.per_cam_near_fars = per_cam_near_fars.float()
                 # else:
                 #     self.per_cam_near_fars = torch.tensor(
                 #         [[0.0, self.ndc_far]]).repeat(per_cam_near_fars.shape[0], 1)
+
             # These values are tuned for the salmon video
             self.global_translation = torch.tensor([0, 0, 2.])
             self.global_scale = torch.tensor([0.5, 0.6, 1])
@@ -155,11 +175,13 @@ class VideoEndoDataset(BaseDataset):
             self.median_imgs = (self.median_imgs * 255).to(torch.uint8)
         if split == 'train':
             imgs = imgs.view(-1, imgs.shape[-1])
+            self.masks = self.masks.view(-1, self.masks.shape[-1])
+            self.depths = self.depths.view(-1, self.depths.shape[-1])
         elif imgs is not None:
             imgs = imgs.view(-1, intrinsics.height * intrinsics.width, imgs.shape[-1])
 
-        # ISG/IST weights are computed on 4x subsampled data.
-        weights_subsampled = int(4 / downsample)
+        # ISG/IST weights are computed on original data.
+        weights_subsampled = 1 
         if scene_bbox is not None:
             scene_bbox = torch.tensor(scene_bbox)
         else:
@@ -240,6 +262,7 @@ class VideoEndoDataset(BaseDataset):
         h = self.intrinsics.height
         w = self.intrinsics.width
         dev = "cpu"
+        assert self.weights_subsampled == 1 # make sure the weights are not subsampled
         if self.split == 'train':
             index = self.get_rand_ids(index)  # [batch_size // (weights_subsampled**2)]
             if self.weights_subsampled == 1 or self.sampling_weights is None:
@@ -277,12 +300,15 @@ class VideoEndoDataset(BaseDataset):
             "timestamps": self.timestamps[index],      # (num_rays or 1, )
             "imgs": None,
         }
-        if self.split == 'train':
-            num_frames_per_camera = len(self.imgs) // (len(self.per_cam_near_fars) * h * w)
-            camera_id = torch.div(image_id, num_frames_per_camera, rounding_mode='floor')  # (num_rays)
-            out['near_fars'] = self.per_cam_near_fars[camera_id, :]
-        else:
-            out['near_fars'] = self.per_cam_near_fars  # Only one test camera
+
+        # if self.split == 'train': # can be simplified since we only have one camera
+        #     num_frames_per_camera = len(self.imgs) // (len(self.per_cam_near_fars) * h * w)
+        #     camera_id = torch.div(image_id, num_frames_per_camera, rounding_mode='floor')  # (num_rays)
+        #     out['near_fars'] = self.per_cam_near_fars[camera_id, :]
+        # else:
+        #     out['near_fars'] = self.per_cam_near_fars  # Only one test camera
+
+        out['near_fars'] = self.per_cam_near_fars # we only have one camera
 
         if self.imgs is not None:
             out['imgs'] = (self.imgs[index] / 255.0).view(-1, self.imgs.shape[-1])
@@ -294,16 +320,21 @@ class VideoEndoDataset(BaseDataset):
             normalize_rd=True)                                        # [num_rays, 3]
 
         imgs = out['imgs']
+
         # Decide BG color
         bg_color = torch.ones((1, 3), dtype=torch.float32, device=dev)
         if self.split == 'train' and imgs.shape[-1] == 4:
             bg_color = torch.rand((1, 3), dtype=torch.float32, device=dev)
         out['bg_color'] = bg_color
+
         # Alpha compositing
         if imgs is not None and imgs.shape[-1] == 4:
             imgs = imgs[:, :3] * imgs[:, 3:] + bg_color * (1.0 - imgs[:, 3:])
-        out['imgs'] = imgs
+        out['imgs'] = imgs # [num_sample, 3]
 
+        # sample depth
+        if hasattr(self, 'depths'):
+            out['depths'] = self.depths[index].view(-1, self.depths.shape[-1])
         return out
 
 
@@ -769,3 +800,24 @@ def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25):  # DyNerf u
     max_diff = torch.mean(max_diff, dim=-1)  # [num_timesteps, h, w]
     max_diff = max_diff.clamp_(min=alpha)
     return max_diff
+
+@torch.jit.script
+def percentile_torch(t: torch.Tensor, q: float) -> float:
+    """
+    Return the ``q``-th percentile of the flattened input tensor's data.
+
+    CAUTION:
+     * Needs PyTorch >= 1.1.0, as ``torch.kthvalue()`` is used.
+     * Values are not interpolated, which corresponds to
+       ``numpy.percentile(..., interpolation="nearest")``.
+
+    :param t: Input tensor.
+    :param q: Percentile to compute, which must be between 0 and 100 inclusive.
+    :return: Resulting value (scalar).
+    """
+    # Note that ``kthvalue()`` works one-based, i.e. the first sorted value
+    # indeed corresponds to k=1, not k=0! Use float(q) instead of q directly,
+    # so that ``round()`` returns an integer, even if q is a np.float32.
+    k = 1 + int(round(.01 * float(q) * (t.numel() - 1)))
+    result = t.view(-1).kthvalue(k).values.item()
+    return result

@@ -119,7 +119,7 @@ def _split_poses_bounds(poses_bounds: np.ndarray) -> Tuple[np.ndarray, np.ndarra
     near_fars = poses_bounds[:, -2:]  # (N_images, 2)
     H, W, focal = poses[0, :, -1]  # original intrinsics, same for all images
     intrinsics = Intrinsics(
-        width=W, height=H, focal_x=focal, focal_y=focal, center_x=W / 2, center_y=H / 2)
+        width=int(W), height=int(H), focal_x=focal, focal_y=focal, center_x=W / 2, center_y=H / 2)
     return poses[:, :, :4], near_fars, intrinsics
 
 
@@ -149,6 +149,22 @@ def load_llff_poses_helper(datadir: str, downsample: float, near_scaling: float)
 
     return poses, near_fars, intrinsics
 
+def load_endo_pose_helper(datadir: str, downsample: float, near_scaling: float):
+    # this is the key load code for endonerf dataset
+    # first, load intrinsic
+    poses_bounds = np.load(os.path.join(datadir, 'poses_bounds.npy'))
+    poses, near_fars, intrinsics = _split_poses_bounds(poses_bounds)
+    # poses = poses_arr[:, :-2].reshape([-1, 3, 5]).transpose([1,2,0])
+    # bds = poses_arr[:, -2:].transpose([1,0])
+    # # Find a reasonable "focus depth" for this dataset
+    # close_depth, inf_depth = bds.min()*.9, bds.max()*5.
+    # dt = .75
+    # mean_dz = 1./(((1.-dt)/(close_depth + 1e-6) + dt/(inf_depth + 1e-6)) + 1e-6)
+
+    # focal = mean_dz
+    # hwf = poses[:,-1,-1]
+    # intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
+    return intrinsics
 
 def load_llff_poses(datadir: str,
                     downsample: float,

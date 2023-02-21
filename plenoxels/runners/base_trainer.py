@@ -214,8 +214,8 @@ class BaseTrainer(abc.ABC):
             "psnr": metrics.psnr(preds, gt),
             "ssim": metrics.ssim(preds, gt),
             "ms-ssim": metrics.msssim(preds, gt),
-            #"alex_lpips": metrics.rgb_lpips(preds, gt, net_name='alex', device=err.device),
-            #"vgg_lpips": metrics.rgb_lpips(preds, gt, net_name='vgg', device=err.device)
+            "alex_lpips": metrics.rgb_lpips(preds, gt, net_name='alex', device=err.device),
+            "vgg_lpips": metrics.rgb_lpips(preds, gt, net_name='vgg', device=err.device)
         }
 
     def evaluate_metrics(self,
@@ -251,15 +251,18 @@ class BaseTrainer(abc.ABC):
         for k in preds.keys():
             if "depth" in k:
                 prop_depth = preds[k].cpu().reshape(img_h, img_w)[..., None]
-                out_depth = torch.cat((out_depth, prop_depth)) if out_depth is not None else prop_depth
+                out_depth = torch.cat((out_depth, prop_depth), dim=1) if out_depth is not None else prop_depth # horizontal concat
 
         if gt is not None:
             gt = gt.reshape(img_h, img_w, -1).cpu()
             if gt.shape[-1] == 4:
                 gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
             summary.update(self.calc_metrics(preds_rgb, gt))
-            out_img = torch.cat((out_img, gt), dim=0)
-            out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
+            # out_img = torch.cat((out_img, gt), dim=0)
+            # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
+            ### we want to save the images in a row not in a column
+            out_img = torch.cat((out_img, gt), dim=1) 
+            out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=1)
 
         out_img_np: np.ndarray = (out_img * 255.0).byte().numpy()
         out_depth_np: Optional[np.ndarray] = None

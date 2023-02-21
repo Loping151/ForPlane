@@ -16,7 +16,7 @@ from plenoxels.ops.image.io import write_video_to_file
 from plenoxels.models.lowrank_model import LowrankModel
 from .base_trainer import BaseTrainer, init_dloader_random, initialize_model
 from .regularization import (
-    PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss
+    PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss, DepthLossHuber
 )
 
 
@@ -46,7 +46,7 @@ class VideoTrainer(BaseTrainer):
         if kwargs.get('endo', None):
             self.endo = True
         # Switch to compute extra video metrics (FLIP, JOD)
-        self.compute_video_metrics = False
+        self.compute_video_metrics = True # may switch to True
         super().__init__(
             train_data_loader=tr_loader,
             num_steps=num_steps,
@@ -138,13 +138,13 @@ class VideoTrainer(BaseTrainer):
                 )
         # Calculate JOD (on whole video)
         if self.compute_video_metrics:
-            per_scene_metrics["JOD"] = metrics.jod(
-                [f[:dataset.img_h, :, :] for f in pred_frames],
-                [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
-            )
+            # per_scene_metrics["JOD"] = metrics.jod(
+            #     [f[:dataset.img_h, :, :] for f in pred_frames],
+            #     [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
+            # )
             per_scene_metrics["FLIP"] = metrics.flip(
-                [f[:dataset.img_h, :, :] for f in pred_frames],
-                [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
+                [f[:, :dataset.img_w, :] for f in pred_frames],
+                [f[:, dataset.img_w: 2*dataset.img_w, :] for f in pred_frames],
             )
 
         val_metrics = [
@@ -152,6 +152,9 @@ class VideoTrainer(BaseTrainer):
         ]
         df = pd.DataFrame.from_records(val_metrics)
         df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
+
+    def validate_endo(self): # Todo: @kailing
+        pass 
 
     def get_save_dict(self):
         base_save_dict = super().get_save_dict()
@@ -183,6 +186,7 @@ class VideoTrainer(BaseTrainer):
             TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
             HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
             DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
+            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0)),
         ]
 
     @property

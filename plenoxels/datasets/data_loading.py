@@ -8,6 +8,8 @@ from torch.multiprocessing import Pool
 import torchvision.transforms
 from PIL import Image
 import imageio.v3 as iio
+import imageio
+import numpy as np
 
 from plenoxels.utils.my_tqdm import tqdm
 
@@ -127,6 +129,78 @@ def _parallel_loader_video(args):
     return _load_video_1cam(**args)
 
 
+def _load_endo_mask_image(idx: int,
+                     paths: List[str],
+                     data_dir: str,
+                     out_h: int,
+                     out_w: int,
+                     ) -> torch.Tensor:
+    f_path = paths[idx]
+    # load mask, only contains 0 and 255
+    mask = Image.open(f_path).convert('L')
+
+    mask = mask.resize((out_w, out_h), Image.LANCZOS)
+    mask = pil2tensor(mask)  # [H, W]
+    mask = mask.permute(1, 2, 0) # [H, W, 1]
+    return mask # , f_path
+
+
+def _parallel_loader_endo_mask_image(args):
+    torch.set_num_threads(1)
+    return _load_endo_mask_image(**args)
+
+
+def _load_endo_depth_image(idx: int,
+                     paths: List[str],
+                     data_dir: str,
+                     out_h: int,
+                     out_w: int,
+                     ) -> torch.Tensor:
+    f_path = paths[idx]
+    # load pred_depth, all values are integers
+    depth = imageio.imread(f_path, ignoregamma=True).astype(np.float32)
+    if depth.shape[0] != out_h or depth.shape[1] != out_w:
+        # use lanczos to resize
+        depth = depth.resize((out_w, out_h), Image.LANCZOS)
+    # use torch.from_numpy to convert to tensor
+    depth = torch.from_numpy(depth).float().unsqueeze(-1)
+
+    # depth = depth.resize((out_w, out_h), Image.LANCZOS)
+    # depth = pil2tensor(depth).float()  # [H, W]
+    # depth = depth.permute(1, 2, 0) # [H, W, 1]
+    return depth
+
+
+def _parallel_loader_endo_depth_image(args):
+    torch.set_num_threads(1)
+    return _load_endo_depth_image(**args)
+
+
+def parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs):
+    p = Pool(min(max_threads, num_images))
+    iterator = p.imap(fn, [{"idx": i, **kwargs} for i in range(num_images)])
+    outputs = []
+    for _ in tqdm(range(num_images), desc=tqdm_title):
+        out = next(iterator)
+        if out is not None:
+            outputs.append(out)
+    return outputs
+
+
+def parallel_load_endo_mask(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
+    max_threads = 10
+    fn = _parallel_loader_endo_mask_image
+    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
+    return outputs
+
+
+def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
+    max_threads = 10
+    fn = _parallel_loader_endo_depth_image
+    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
+    return outputs
+
+
 def parallel_load_images(tqdm_title,
                          dset_type: str,
                          num_images: int,
@@ -144,11 +218,5 @@ def parallel_load_images(tqdm_title,
         max_threads = 8
     else:
         raise ValueError(dset_type)
-    p = Pool(min(max_threads, num_images))
-    iterator = p.imap(fn, [{"idx": i, **kwargs} for i in range(num_images)])
-    outputs = []
-    for _ in tqdm(range(num_images), desc=tqdm_title):
-        out = next(iterator)
-        if out is not None:
-            outputs.append(out)
+    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs

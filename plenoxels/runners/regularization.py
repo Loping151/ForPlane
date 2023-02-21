@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.optim.lr_scheduler
 from torch import nn
+import torch.nn.functional as F
 
 from plenoxels.models.lowrank_model import LowrankModel
 from plenoxels.ops.losses.histogram_loss import interlevel_loss
@@ -196,6 +197,17 @@ class DepthTV(Regularizer):
         )
         return tv
 
+class DepthLossHuber(Regularizer):
+    def __init__(self, delta: float, initial_value: float):
+        super().__init__('huber-depth', initial_value)
+        self.delta = delta
+
+    def _regularize(self, model: LowrankModel, model_out, **kwargs) -> torch.Tensor:
+        depth = model_out['depth']
+        target_depth = kwargs['target_depth']
+        # get valid mask
+        valid_mask = target_depth > 0
+        return F.huber_loss(depth[valid_mask], target_depth[valid_mask], delta=self.delta)
 
 class L1TimePlanes(Regularizer):
     def __init__(self, initial_value, what='field'):
@@ -250,3 +262,4 @@ class DistortionLoss(Regularizer):
         loss_bi_1 = w[..., 1:] * wm_cumsum[..., :-1]
         loss_bi = 2 * (loss_bi_0 - loss_bi_1).sum(dim=-1).mean()
         return loss_bi + loss_uni
+

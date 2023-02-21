@@ -33,7 +33,7 @@ def init_grid_param(
     assert in_dim == len(reso), "Resolution must have same number of elements as input-dimension"
     has_time_planes = in_dim == 4
     assert grid_nd <= in_dim
-    coo_combs = list(itertools.combinations(range(in_dim), grid_nd))
+    coo_combs = list(itertools.combinations(range(in_dim), grid_nd)) # [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
     grid_coefs = nn.ParameterList()
     for ci, coo_comb in enumerate(coo_combs):
         new_grid_coef = nn.Parameter(torch.empty(
@@ -113,18 +113,16 @@ class KPlaneField(nn.Module):
         # 1. Init planes
         self.grids = nn.ModuleList()
         self.feature_dim = 0
-        for res in self.multiscale_res_multipliers:
+        for res in self.multiscale_res_multipliers: # [1, 2, 4, 8]
             # initialize coordinate grid
             config = self.grid_config[0].copy()
             # Resolution fix: multi-res only on spatial planes
-            config["resolution"] = [
-                r * res for r in config["resolution"][:3]
-            ] + config["resolution"][3:]
+            config["resolution"] = [r * res for r in config["resolution"][:3]] + config["resolution"][3:]
             gp = init_grid_param(
-                grid_nd=config["grid_dimensions"],
-                in_dim=config["input_coordinate_dim"],
-                out_dim=config["output_coordinate_dim"],
-                reso=config["resolution"],
+                grid_nd=config["grid_dimensions"], # 2
+                in_dim=config["input_coordinate_dim"], # 4
+                out_dim=config["output_coordinate_dim"], # 16
+                reso=config["resolution"], # [64, 64, 64, 32]->[128, 128, 128, 32]->[256, 256, 256, 32]->[512, 512, 512, 32]
             )
             # shape[1] is out-dim - Concatenate over feature len for each scale
             if self.concat_features:
@@ -155,6 +153,7 @@ class KPlaneField(nn.Module):
                 "degree": 4,
             },
         )
+        # self.direction_encoder = nn.Identity()
 
         # 3. Init decoder network
         if self.linear_decoder:
@@ -164,7 +163,7 @@ class KPlaneField(nn.Module):
             # combining the color features into RGB
             # This architecture is based on instant-NGP
             self.color_basis = tcnn.Network(
-                n_input_dims=3 + self.appearance_embedding_dim,#self.direction_encoder.n_output_dims,
+                n_input_dims=3 + self.appearance_embedding_dim, #self.direction_encoder.n_output_dims,
                 n_output_dims=3 * self.feature_dim,
                 network_config={
                     "otype": "FullyFusedMLP",
