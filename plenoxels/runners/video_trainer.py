@@ -127,8 +127,7 @@ class VideoTrainer(BaseTrainer):
                 per_scene_metrics[k].append(v)
             pb.set_postfix_str(f"PSNR={out_metrics['psnr']:.2f}", refresh=False)
             pb.update(1)
-            # if img_idx >= 2:
-            #     break
+
         pb.close()
         if self.save_video:
             write_video_to_file(
