@@ -145,15 +145,21 @@ class KPlaneField(nn.Module):
         else:
             self.appearance_embedding_dim = 0
 
-        # 3. Init decoder params
-        self.direction_encoder = tcnn.Encoding(
-            n_input_dims=3,
-            encoding_config={
-                "otype": "SphericalHarmonics",
-                "degree": 4,
-            },
-        )
-        # self.direction_encoder = nn.Identity()
+        # 3. Init decoder params if 'disable_view_encoder' is True, use Indentity as encoder
+        self.disable_view_dir = self.grid_config[0].get('disable_view_encoder', False)
+
+        if not self.disable_view_dir:
+            self.direction_encoder = tcnn.Encoding(
+                n_input_dims=3,
+                encoding_config={
+                    "otype": "SphericalHarmonics",
+                    "degree": 4,
+                },
+            )
+            direction_encoder_n_output_dims = self.direction_encoder.n_output_dims
+        else:
+            self.direction_encoder = nn.Identity()
+            direction_encoder_n_output_dims = 0
 
         # 3. Init decoder network
         if self.linear_decoder:
@@ -199,7 +205,7 @@ class KPlaneField(nn.Module):
                 },
             )
             self.in_dim_color = (
-                    self.direction_encoder.n_output_dims
+                    direction_encoder_n_output_dims
                     + self.geo_feat_dim
                     + self.appearance_embedding_dim
             )
@@ -217,11 +223,11 @@ class KPlaneField(nn.Module):
 
     def get_density(self, pts: torch.Tensor, timestamps: Optional[torch.Tensor] = None):
         """Computes and returns the densities."""
-        if self.spatial_distortion is not None:
+        if self.spatial_distortion is not None: # is None
             pts = self.spatial_distortion(pts)
             pts = pts / 2  # from [-2, 2] to [-1, 1]
         else:
-            pts = normalize_aabb(pts, self.aabb)
+            pts = normalize_aabb(pts, self.aabb) # this operation can be aviod. because pts is already normalized TODO: remove this
         n_rays, n_samples = pts.shape[:2]
         if timestamps is not None:
             timestamps = timestamps[:, None].expand(-1, n_samples)[..., None]  # [n_rays, n_samples, 1]
@@ -261,13 +267,16 @@ class KPlaneField(nn.Module):
 
         directions = directions.view(-1, 1, 3).expand(pts.shape).reshape(-1, 3)
         if not self.linear_decoder:
-            directions = get_normalized_directions(directions)
-            encoded_directions = self.direction_encoder(directions)
+            if not self.disable_view_dir: # only valid in the case of not linear decoder
+                directions = get_normalized_directions(directions)
+                encoded_directions = self.direction_encoder(directions)
 
-        if self.linear_decoder:
-            color_features = [features]
+            if self.linear_decoder:
+                color_features = [features]
+            else:
+                color_features = [encoded_directions, features.view(-1, self.geo_feat_dim)]
         else:
-            color_features = [encoded_directions, features.view(-1, self.geo_feat_dim)]
+            color_features = [features.view(-1, self.geo_feat_dim)]
 
         if self.use_appearance_embedding:
             if camera_indices.dtype == torch.float32:

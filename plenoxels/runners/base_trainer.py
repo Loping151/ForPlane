@@ -264,7 +264,7 @@ class BaseTrainer(abc.ABC):
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
             ### we want to save the images in a row not in a column
             out_img = torch.cat((out_img, gt), dim=1) 
-            out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=1)
+            out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=1) # pred, gt, error map
 
         out_img_np: np.ndarray = (out_img * 255.0).byte().numpy()
         out_depth_np: Optional[np.ndarray] = None

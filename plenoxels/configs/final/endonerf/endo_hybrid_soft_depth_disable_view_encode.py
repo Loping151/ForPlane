@@ -67,6 +67,7 @@ config = {
     'grid_dimensions': 2,
     'input_coordinate_dim': 4,
     'output_coordinate_dim': 16,
-    'resolution': [64, 64, 64, 63]
+    'resolution': [64, 64, 64, 63],
+    'disable_view_encoder': True,
     }],
 }

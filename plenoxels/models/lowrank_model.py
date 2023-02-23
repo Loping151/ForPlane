@@ -133,7 +133,7 @@ class LowrankModel(nn.Module):
         if self.use_proposal_weight_anneal:
             # anneal the weights of the proposal network before doing PDF sampling
             N = self.proposal_weights_anneal_max_num_iters
-            # https://arxiv.org/pdf/2111.12077.pdf eq. 18
+            # https://arxiv.org/pdf/2111.12077.pdf eq. 18, mipnerf360
             train_frac = np.clip(step / N, 0, 1)
             bias = lambda x, b: (b * x) / ((b - 1) * x + 1)
             anneal = bias(train_frac, self.proposal_weights_anneal_slope)

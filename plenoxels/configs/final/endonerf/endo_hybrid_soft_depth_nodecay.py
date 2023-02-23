@@ -1,6 +1,6 @@
 config = {
     # a case for enable depth training. 
-    'expname': 'endo_train_soft_depth_decay_full',
+    'expname': 'endo_train_soft_depth',
     'logdir': './logs/endo_example_x',
     'device': 'cuda:0',
 
@@ -37,7 +37,7 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 2500,
+    'step_iter': 5000000,
 
     # Training settings
     'valid_every': 2500,

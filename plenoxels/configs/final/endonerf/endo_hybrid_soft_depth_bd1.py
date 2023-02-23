@@ -13,7 +13,7 @@ config = {
     'isg_step': -1,
     'ist_step': 50000,
     'keyframes': False,
-    'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
+    'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]],
     'endo': True,
     'near_scaling': 0.95,
 

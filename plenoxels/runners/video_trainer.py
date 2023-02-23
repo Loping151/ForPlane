@@ -125,6 +125,8 @@ class VideoTrainer(BaseTrainer):
                 per_scene_metrics[k].append(v)
             pb.set_postfix_str(f"PSNR={out_metrics['psnr']:.2f}", refresh=False)
             pb.update(1)
+            if img_idx >= 2:
+                break
         pb.close()
         if self.save_video:
             write_video_to_file(
@@ -148,10 +150,12 @@ class VideoTrainer(BaseTrainer):
             )
 
         val_metrics = [
-            self.report_test_metrics(per_scene_metrics, extra_name=None),
+            self.report_test_metrics(per_scene_metrics, extra_name=f'step_{self.global_step}'),
         ]
         df = pd.DataFrame.from_records(val_metrics)
         df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
+        # here we save all metrics to a csv file for further analysis
+        save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv"))
 
     def validate_endo(self): # Todo: @kailing
         pass 
@@ -186,7 +190,8 @@ class VideoTrainer(BaseTrainer):
             TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
             HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
             DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
-            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), delta=0.2), # temp use 0.2 for huber
+            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+            DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
         ]
 
     @property
@@ -266,3 +271,18 @@ def load_data(data_downsample, data_dirs, validate_only, render_only, **kwargs):
     test_split = 'render' if render_only else 'test'
     od.update(init_ts_data(data_dirs[0], split=test_split, **kwargs))
     return od
+
+
+def save_all_metrics(per_scene_metrics, data_path):
+
+    tensor_to_float = lambda x: x.item()
+    # pre-convert the elements to float
+    if 'mse' in per_scene_metrics:
+        per_scene_metrics['mse'] = list(map(tensor_to_float, per_scene_metrics['mse']))
+    # import json
+    # with open(data_path, 'w') as f:
+    # # Convert the dictionary to a JSON string and write it to disk.
+    #     json.dump(per_scene_metrics, f)
+
+    df = pd.DataFrame.from_dict(per_scene_metrics)
+    df.to_csv(data_path, index=True)

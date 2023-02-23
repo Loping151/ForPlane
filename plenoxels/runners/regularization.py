@@ -198,16 +198,46 @@ class DepthTV(Regularizer):
         return tv
 
 class DepthLossHuber(Regularizer):
-    def __init__(self, initial_value: float, delta: float=0.2):
-        super().__init__('huber-depth', initial_value)
+    def __init__(self, initial_value, what: str = 'field', step_iter=-1, delta: float=0.2):
+        if what not in {'field', 'proposal_network'}:
+            raise ValueError(f'what must be one of "field" or "proposal_network" '
+                             f'but {what} was passed.')
+        name = f'huber-{what[:2]}'
+        super().__init__(name, initial_value)
+        self.what = what
         self.delta = delta
+        self.step_iter = step_iter
+
+    def step(self, global_step):
+        if global_step > self.step_iter:
+            self.weight = 0.0
+
+    def compute_depth_loss_huber(self, gt_depth, pred_depth, mask=None):
+        if mask is not None:
+            gt_depth = gt_depth[mask]
+            pred_depth = pred_depth[mask]
+        return F.huber_loss(pred_depth, gt_depth, delta=self.delta)
 
     def _regularize(self, model: LowrankModel, model_out, **kwargs) -> torch.Tensor:
-        depth = model_out['depth']
-        target_depth = kwargs['data']['depths']
-        # get valid mask
-        valid_mask = target_depth > 0
-        return F.huber_loss(depth[valid_mask], target_depth[valid_mask], delta=self.delta)
+        total = 0
+        if self.weight > 0:
+            target_depth = kwargs['data']['depths']
+            # get valid mask
+            valid_mask = target_depth > 0
+
+            if self.what == 'field':
+                depth = model_out['depth']
+                total += self.compute_depth_loss_huber(target_depth, depth, valid_mask)
+            elif self.what == 'proposal_network':
+                for i in range(model.num_proposal_iterations):
+                    depth = model_out[f"prop_depth_{i}"]
+                    total += self.compute_depth_loss_huber(target_depth, depth, valid_mask)
+            else:
+                raise NotImplementedError(self.what)
+        else:
+            total = torch.tensor(0.0)
+        return total
+
 
 class L1TimePlanes(Regularizer):
     def __init__(self, initial_value, what='field'):
