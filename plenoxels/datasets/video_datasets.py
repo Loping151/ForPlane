@@ -54,10 +54,6 @@ class VideoEndoDataset(BaseDataset):
         self.maskIS = self.maskIS[0]
         self.use_mask = self.use_mask[0]
         assert not(self.maskIS and self.use_mask)
-        if self.maskIS:
-            assert self.isg and self.maskIS
-        if self.use_mask:
-            assert not self.isg and self.use_mask
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
