@@ -270,13 +270,11 @@ class KPlaneField(nn.Module):
             if not self.disable_view_dir: # only valid in the case of not linear decoder
                 directions = get_normalized_directions(directions)
                 encoded_directions = self.direction_encoder(directions)
-
-            if self.linear_decoder:
-                color_features = [features]
-            else:
                 color_features = [encoded_directions, features.view(-1, self.geo_feat_dim)]
-        else:
-            color_features = [features.view(-1, self.geo_feat_dim)]
+            else: # no view direction embedding
+                color_features = [features]
+        else: # linear decoder
+            color_features = [features]
 
         if self.use_appearance_embedding:
             if camera_indices.dtype == torch.float32:

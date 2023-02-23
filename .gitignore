@@ -9,3 +9,6 @@ logs
 scripts
 # Ignore all files in the scripts directory
 scripts/*
+
+# for ignore pyc
+__pycache__/
