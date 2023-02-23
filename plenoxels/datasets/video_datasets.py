@@ -53,6 +53,11 @@ class VideoEndoDataset(BaseDataset):
         self.use_mask = kwargs.get('use_gt_mask', False),
         self.maskIS = self.maskIS[0]
         self.use_mask = self.use_mask[0]
+        assert not(self.maskIS and self.use_mask)
+        if self.maskIS:
+            assert self.isg and self.maskIS
+        if self.use_mask:
+            assert not self.isg and self.use_mask
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
@@ -61,6 +66,7 @@ class VideoEndoDataset(BaseDataset):
         self.ndc_far = ndc_far
         self.median_imgs = None
         self.gt_masks = None
+        self.mask_weights = None
 
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
@@ -100,16 +106,15 @@ class VideoEndoDataset(BaseDataset):
                 png_cnt = 0
                 str_cnt = '/000000.png'
                 
-                mask_dir = os.path.join(datadir, 'gt_masks')
-                mask_list = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
-                gt_masks = np.stack(mask_list, axis=0).astype(np.float64) / 255.0
-                self.gt_masks = torch.Tensor(1.0 - gt_masks).to(torch.device("cpu")).unsqueeze(-1)
-                self.gt_masks = self.gt_masks.reshape(1, *self.gt_masks.shape)
-                self.gt_masks = self.gt_masks.reshape(-1) / torch.sum(self.gt_masks)
+                # mask_dir = os.path.join(datadir, 'gt_masks')
+                # mask_list = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
+                # gt_masks = np.stack(mask_list, axis=0).astype(np.float64) / 255.0
+                # self.gt_masks = torch.Tensor(1.0 - gt_masks).to(torch.device("cpu")).unsqueeze(-1)
+
 
                 while os.path.exists(datadir + "/images" + str_cnt):
                     paths_img.append(datadir + "/images" + str_cnt)
-                    paths_mask.append(datadir + "/masks" + str_cnt)
+                    paths_mask.append(datadir + "/gt_masks" + str_cnt)
                     paths_depth.append(datadir + "/depth" + str_cnt)
                     png_cnt += 1
                     str_cnt = '/' + '0'*(6-len(str(png_cnt))) + str(png_cnt) + '.png'
@@ -143,12 +148,11 @@ class VideoEndoDataset(BaseDataset):
                     out_h=intrinsics.height,
                     out_w=intrinsics.width,
                     )
-                imgs_tensor = torch.cat(imgs, 0).reshape((len(imgs), intrinsics.height, intrinsics.width, 3))
-                self.median_imgs, _ = torch.median(imgs_tensor, dim=0)
-                self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
+
                 timestamps = torch.linspace(0, 299, len(paths_img))
                 
                 imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [imgs, masks, depths]]
+                self.gt_masks = self.masks.clone()
                 # we use near and far to normalize depth
                 self.close_depth = percentile_torch(self.depths, 3)
                 self.inf_depth = percentile_torch(self.depths, 99.9)
@@ -162,6 +166,16 @@ class VideoEndoDataset(BaseDataset):
 
                 # bds, torch.Size([1, 2])
                 self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
+
+                self.median_imgs, _ = torch.median(imgs.reshape((len(paths_img), intrinsics.height, intrinsics.width, 3)), dim=0)
+                self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
+
+                # self.gt_masks /= 255.0
+                # self.gt_masks = torch.Tensor(1.0 - self.gt_masks).to(torch.device("cpu")).unsqueeze(-1)
+
+                self.mask_weights = self.gt_masks.reshape(1, *self.gt_masks.shape)
+                self.mask_weights = self.mask_weights.reshape(-1) / torch.sum(self.mask_weights)
+
 
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:
@@ -278,7 +292,7 @@ class VideoEndoDataset(BaseDataset):
         log.info(f"Enabled ISG weights.")
 
     def enable_mask(self):
-        self.sampling_weights = self.gt_masks
+        self.sampling_weights = self.mask_weights
         log.info(f"Using masks as weights.") 
 
     def switch_isg2ist(self):
@@ -341,6 +355,9 @@ class VideoEndoDataset(BaseDataset):
 
         if self.imgs is not None:
             out['imgs'] = (self.imgs[index] / 255.0).view(-1, self.imgs.shape[-1])
+
+        if self.gt_masks is not None:
+            out['masks'] = self.gt_masks
 
         c2w = self.poses[image_id]                                    # [num_rays or 1, 3, 4]
         camera_dirs = stack_camera_dirs(x, y, self.intrinsics, True)  # [num_rays, 3]

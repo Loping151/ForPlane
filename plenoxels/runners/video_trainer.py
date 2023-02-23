@@ -109,26 +109,103 @@ class VideoTrainer(BaseTrainer):
         # Reset randomness in train-dataset
         self.train_dataset.reset_iter()
 
+    # @torch.no_grad()
+    # def validate(self):
+    #     dataset = self.test_dataset
+    #     per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
+    #     pred_frames, out_depths = [], []
+    #     pb = tqdm(total=len(dataset), desc=f"Test scene ({dataset.name})")
+    #     for img_idx, data in enumerate(dataset):
+    #         preds = self.eval_step(data)
+    #         out_metrics, out_img, out_depth = self.evaluate_metrics(
+    #             data["imgs"], preds, dset=dataset, img_idx=img_idx, name=None,
+    #             save_outputs=self.save_outputs)
+    #         pred_frames.append(out_img)
+    #         if out_depth is not None:
+    #             out_depths.append(out_depth)
+    #         for k, v in out_metrics.items():
+    #             per_scene_metrics[k].append(v)
+    #         pb.set_postfix_str(f"PSNR={out_metrics['psnr']:.2f}", refresh=False)
+    #         pb.update(1)
+
+    #     pb.close()
+    #     if self.save_video:
+    #         write_video_to_file(
+    #             os.path.join(self.log_dir, f"step{self.global_step}.mp4"),
+    #             pred_frames
+    #         )
+    #         if len(out_depths) > 0:
+    #             write_video_to_file(
+    #                 os.path.join(self.log_dir, f"step{self.global_step}-depth.mp4"),
+    #                 out_depths
+    #             )
+    #     # Calculate JOD (on whole video)
+    #     if self.compute_video_metrics:
+    #         # per_scene_metrics["JOD"] = metrics.jod(
+    #         #     [f[:dataset.img_h, :, :] for f in pred_frames],
+    #         #     [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
+    #         # )
+    #         per_scene_metrics["FLIP"] = metrics.flip(
+    #             [f[:, :dataset.img_w, :] for f in pred_frames],
+    #             [f[:, dataset.img_w: 2*dataset.img_w, :] for f in pred_frames],
+    #         )
+
+    #     val_metrics = [
+    #         self.report_test_metrics(per_scene_metrics, extra_name=f'step_{self.global_step}'),
+    #     ]
+    #     df = pd.DataFrame.from_records(val_metrics)
+    #     df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
+    #     # here we save all metrics to a csv file for further analysis
+    #     save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv"))
+
     @torch.no_grad()
     def validate(self):
+        # 夺舍
+        self.validate_endo(self)
+
+    @torch.no_grad()
+    def validate_endo(self): # Todo: @kailing
         dataset = self.test_dataset
-        per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
         pred_frames, out_depths = [], []
-        pb = tqdm(total=len(dataset), desc=f"Test scene ({dataset.name})")
-        for img_idx, data in enumerate(dataset):
+        per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
+        # gt_dir = os.path.join(data_dirs, 'images')
+        # mask_dir = os.path.join(data_dirs, 'gt_masks')
+        # img_dir = os.path.join(logdir, 'estm')
+        # gt_all = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
+        # mask_all = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
+        # gt_list = []
+        # mask_list = []
+        img_list = []
+        # indexex = []
+        stdshape = (len(dataset), dataset.img_h, dataset.img_w, 3)
+        for img_idx, data in tqdm(enumerate(dataset)):
             preds = self.eval_step(data)
-            out_metrics, out_img, out_depth = self.evaluate_metrics(
+            out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
                 data["imgs"], preds, dset=dataset, img_idx=img_idx, name=None,
-                save_outputs=self.save_outputs)
+                save_outputs=self.save_outputs, out_pred=True)
             pred_frames.append(out_img)
             if out_depth is not None:
                 out_depths.append(out_depth)
             for k, v in out_metrics.items():
                 per_scene_metrics[k].append(v)
-            pb.set_postfix_str(f"PSNR={out_metrics['psnr']:.2f}", refresh=False)
-            pb.update(1)
+            img_list.append(out_pred)
+        # for img_idx, data in tqdm(enumerate(dataset)):
+        #     preds = self.eval_step(data)
+        #     if isinstance(dataset.img_h, int):
+        #         img_h, img_w = dataset.img_h, dataset.img_w
+        #     else:
+        #         img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
+        #     preds_rgb = (
+        #         preds["rgb"]
+        #         .reshape(img_h, img_w, 3)
+        #         .cpu()
+        #         .clamp(0, 1)
+        #     )
+        #     if not torch.isfinite(preds_rgb).all():
+        #         log.warning(f"Predictions have {torch.isnan(preds_rgb).sum()} NaNs, "
+        #                     f"{torch.isinf(preds_rgb).sum()} infs.")
+        #         preds_rgb = torch.nan_to_num(preds_rgb, nan=0.0)
 
-        pb.close()
         if self.save_video:
             write_video_to_file(
                 os.path.join(self.log_dir, f"step{self.global_step}.mp4"),
@@ -156,39 +233,9 @@ class VideoTrainer(BaseTrainer):
         df = pd.DataFrame.from_records(val_metrics)
         df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
         # here we save all metrics to a csv file for further analysis
-        save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv"))
-
-    @torch.no_grad()
-    def validate_endo(self, data_dirs, logdir): # Todo: @kailing
-        debug = 0
-        dataset = self.test_dataset
-        gt_dir = os.path.join(data_dirs, 'images')
-        mask_dir = os.path.join(data_dirs, 'gt_masks')
-        # img_dir = os.path.join(logdir, 'estm')
-        # gt_all = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
-        # mask_all = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
-        # gt_list = []
-        # mask_list = []
-        img_list = []
-        indexex = []
-        for img_idx, data in tqdm(enumerate(dataset)):
-            preds = self.eval_step(data)
-            if isinstance(dataset.img_h, int):
-                img_h, img_w = dataset.img_h, dataset.img_w
-            else:
-                img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
-            preds_rgb = (
-                preds["rgb"]
-                .reshape(img_h, img_w, 3)
-                .cpu()
-                .clamp(0, 1)
-            )
-            if not torch.isfinite(preds_rgb).all():
-                log.warning(f"Predictions have {torch.isnan(preds_rgb).sum()} NaNs, "
-                            f"{torch.isinf(preds_rgb).sum()} infs.")
-                preds_rgb = torch.nan_to_num(preds_rgb, nan=0.0)
-            if not os.path.exists(os.path.join(logdir, 'estm')):
-                os.mkdir(os.path.join(logdir, 'estm'))
+        save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv")) 
+            # if not os.path.exists(os.path.join(logdir, 'estm')):
+            #     os.mkdir(os.path.join(logdir, 'estm'))
             # if not os.path.exists(os.path.join(logdir, 'gt_img')):
             #     os.mkdir(os.path.join(logdir, 'gt_img'))
             # if not os.path.exists(os.path.join(logdir, 'gt_mask')):
@@ -197,24 +244,27 @@ class VideoTrainer(BaseTrainer):
             # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), preds_rgb)
             #     imageio.imwrite(os.path.join(logdir, 'gt_img', str(img_idx)+'.png'), gt_all[img_idx])
             #     imageio.imwrite(os.path.join(logdir, 'gt_mask', str(img_idx)+'.png'), mask_all[img_idx])
-            img_list.append(preds_rgb)
-            indexex.append(img_idx)
+            # indexex.append(img_idx)
             # gt_list.append(gt_all[img_idx])
             # mask_list.append(mask_all[img_idx])
         # img_list = [imageio.imread(os.path.join(logdir, 'estm', fn)) for fn in sorted(os.listdir(os.path.join(logdir, 'estm'))) if fn.endswith('.png')]
-        gt_list = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
-        mask_list = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
+        # gt_list = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
+        # mask_list = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
         # img_list = [imageio.imread(os.path.join(img_dir, fn)) for fn in sorted(os.listdir(img_dir)) if fn.endswith('.png')]
-        gt_list = [gt_list[i] for i in indexex]
-        mask_list = [mask_list[i] for i in indexex]
+        # gt_list = [gt_list[i] for i in indexex]
+        # mask_list = [mask_list[i] for i in indexex]
         device = torch.device("cpu")
-        masks = np.stack(mask_list, axis=0).astype(np.float64) / 255.0
-        gts = np.stack(gt_list, axis=0).astype(np.float64) / 255.0
-        imgs = np.stack(img_list, axis=0).astype(np.float64)
-        print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
+
+        imgs = np.stack(img_list, axis=0).astype(np.float32)
+        masks = (dataset.masks/255).reshape(stdshape[:-1])
         masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
+        gts = (dataset.imgs/255).reshape(stdshape)
+        # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
+        gts = np.stack(gts, axis=0).astype(np.float32) / 255.0
+        print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
         gts = torch.Tensor(gts).to(device) * masks
         imgs = torch.Tensor(imgs).to(device) * masks
+
         print('running endo eval')
         mse = img2mse(imgs, gts)
         psnr = mse2psnr(mse)
@@ -223,9 +273,11 @@ class VideoTrainer(BaseTrainer):
         print('PSNR:', psnr.item())
         print('SSIM:', ssim_.item())
         print('LPIPS:', torch.mean(lpips_).item())
-        with open(os.path.join(logdir, 'endo_log.txt'), 'w') as file:
+        with open(os.path.join(self.log_dir, 'endo_log.txt'), 'w') as file:
             file.writelines(('PSNR:', str(psnr.item()), '\n', 'SSIM:', str(ssim_.item()), '\n', 'LPIPS:', str(torch.mean(lpips_).item()), '\n'))
         print('logging endo eval successful.')
+
+
     def get_save_dict(self):
         base_save_dict = super().get_save_dict()
         return base_save_dict

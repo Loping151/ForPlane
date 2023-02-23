@@ -12,8 +12,8 @@ import numpy as np
 import random
 def seed_everything(seed):
     random.seed(seed)
-    os.version['PYTHONHASHSEED'] = str(seed)
-    np.ransom.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     # torch.backends.cudnn.deterministic = True
@@ -174,8 +174,8 @@ def main():
 
     if validate_only:
         if config['endo'] == True:
-            trainer.validate_endo(config['data_dirs'][0], os.path.join(config['logdir'], config['expname']))
-        trainer.validate()
+            trainer.validate_endo()
+        # trainer.validate()
     elif render_only:
         render_to_path(trainer, extra_name="")
     elif spacetime_only:

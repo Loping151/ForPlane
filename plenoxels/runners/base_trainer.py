@@ -226,7 +226,8 @@ class BaseTrainer(abc.ABC):
                          dset,
                          img_idx: int,
                          name: Optional[str] = None,
-                         save_outputs: bool = True) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
+                         save_outputs: bool = True, 
+                         out_pred = False) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
         if isinstance(dset.img_h, int):
             img_h, img_w = dset.img_h, dset.img_w
         else:
@@ -280,7 +281,8 @@ class BaseTrainer(abc.ABC):
             if out_depth is not None:
                 depth_name = out_name + "-depth"
                 write_png(os.path.join(self.log_dir, depth_name + ".png"), out_depth_np)
-
+        if out_pred:
+            return summary, out_img_np, out_depth_np, preds_rgb
         return summary, out_img_np, out_depth_np
 
     @abc.abstractmethod
