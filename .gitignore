@@ -13,3 +13,5 @@ scripts/*
 
 # for ignore pyc
 __pycache__/
+
+logs/
