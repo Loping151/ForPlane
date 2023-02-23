@@ -166,7 +166,7 @@ class VideoEndoDataset(BaseDataset):
                 self.median_imgs, _ = torch.median(imgs.reshape((len(paths_img), intrinsics.height, intrinsics.width, 3)), dim=0)
                 self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
 
-                self.mask_weights /= self.gt_masks.clone() / 255.0
+                self.mask_weights = self.gt_masks.clone() / 255.0
                 self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu")).unsqueeze(-1)
 
                 self.mask_weights = self.mask_weights.reshape(1, *self.mask_weights.shape)
