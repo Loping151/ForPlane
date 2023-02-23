@@ -158,16 +158,25 @@ class VideoTrainer(BaseTrainer):
     #     # here we save all metrics to a csv file for further analysis
     #     save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv"))
 
-    @torch.no_grad()
-    def validate(self):
-        # 夺舍
-        self.validate_endo(self)
+    # @torch.no_grad()
+    # def validate(self):
+    #     # 夺舍
+    #     self.validate_endo(self)
 
     @torch.no_grad()
-    def validate_endo(self): # Todo: @kailing
+    def validate(self): # Todo: @kailing
         dataset = self.test_dataset
         pred_frames, out_depths = [], []
         per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
+
+        device = torch.device("cpu")
+        stdshape = (len(dataset), dataset.img_h, dataset.img_w, 3)
+        masks = (dataset.masks/255).reshape(stdshape[:-1])
+        masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
+        gts = (dataset.imgs/255).reshape(stdshape)
+        # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
+        gts = np.stack(gts, axis=0).astype(np.float32)
+
         # gt_dir = os.path.join(data_dirs, 'images')
         # mask_dir = os.path.join(data_dirs, 'gt_masks')
         # img_dir = os.path.join(logdir, 'estm')
@@ -177,7 +186,7 @@ class VideoTrainer(BaseTrainer):
         # mask_list = []
         img_list = []
         # indexex = []
-        stdshape = (len(dataset), dataset.img_h, dataset.img_w, 3)
+
         for img_idx, data in tqdm(enumerate(dataset)):
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
@@ -253,14 +262,8 @@ class VideoTrainer(BaseTrainer):
         # img_list = [imageio.imread(os.path.join(img_dir, fn)) for fn in sorted(os.listdir(img_dir)) if fn.endswith('.png')]
         # gt_list = [gt_list[i] for i in indexex]
         # mask_list = [mask_list[i] for i in indexex]
-        device = torch.device("cpu")
 
         imgs = np.stack(img_list, axis=0).astype(np.float32)
-        masks = (dataset.masks/255).reshape(stdshape[:-1])
-        masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
-        gts = (dataset.imgs/255).reshape(stdshape)
-        # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
-        gts = np.stack(gts, axis=0).astype(np.float32) / 255.0
         print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
         gts = torch.Tensor(gts).to(device) * masks
         imgs = torch.Tensor(imgs).to(device) * masks

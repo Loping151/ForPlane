@@ -4,7 +4,8 @@ logs
 *.pyc
 *.png
 *.jpg
-
+*.zip
+*.rar
 *.ipynb_checkpoints
 scripts
 # Ignore all files in the scripts directory
