@@ -20,6 +20,7 @@ from .ray_utils import (
 from .synthetic_nerf_dataset import (
     load_360_images, load_360_intrinsics,
 )
+import imageio
 
 class VideoEndoDataset(BaseDataset):
     len_time: int
@@ -40,13 +41,15 @@ class VideoEndoDataset(BaseDataset):
                  ndc: bool = False,
                  scene_bbox: Optional[List] = None,
                  near_scaling: float = 0.9,
-                 ndc_far: float = 2.6):
+                 ndc_far: float = 2.6,
+                 **kwargs):
         self.keyframes = keyframes
         self.max_cameras = max_cameras
         self.max_tsteps = max_tsteps
         self.downsample = downsample
         self.isg = isg
         self.ist = False
+        self.maskIS = kwargs.get('maskIS', False),
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
@@ -129,7 +132,11 @@ class VideoEndoDataset(BaseDataset):
                     out_h=intrinsics.height,
                     out_w=intrinsics.width,
                     )
-
+                imgs_tensor = torch.cat(imgs, 0).reshape((len(imgs), intrinsics.height, intrinsics.width, 3))
+                self.median_imgs, _ = torch.median(imgs_tensor, dim=0)
+                self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
+                timestamps = torch.linspace(0, 299, len(paths_img))
+                
                 imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [imgs, masks, depths]]
                 # we use near and far to normalize depth
                 self.close_depth = percentile_torch(self.depths, 3)
@@ -141,9 +148,6 @@ class VideoEndoDataset(BaseDataset):
 
                 ### generate dummy pose
                 self.poses = torch.stack([torch.eye(4)] * len(paths_img)).float()
-
-                self.median_imgs = torch.zeros((1,intrinsics.height,intrinsics.width,3))
-                timestamps = torch.linspace(0, 299, len(paths_img))
 
                 # bds, torch.Size([1, 2])
                 self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
@@ -211,9 +215,14 @@ class VideoEndoDataset(BaseDataset):
                 # Precompute ISG weights
                 t_s = time.time()
                 gamma = 1e-3 if self.keyframes else 2e-2
-                self.isg_weights = dynerf_isg_weight(
-                    imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
-                    median_imgs=self.median_imgs, gamma=gamma)
+                if self.maskIS:
+                    self.isg_weights = dynerf_isg_weight(
+                        imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
+                        median_imgs=self.median_imgs, gamma=gamma, maskdir=os.path.join(self.datadir, 'gt_masks'))
+                else:
+                    self.isg_weights = dynerf_isg_weight(
+                        imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
+                        median_imgs=self.median_imgs, gamma=gamma)
                 # Normalize into a probability distribution, to speed up sampling
                 self.isg_weights = (self.isg_weights.reshape(-1) / torch.sum(self.isg_weights))
                 torch.save(self.isg_weights, os.path.join(datadir, f"isg_weights.pt"))
@@ -226,9 +235,14 @@ class VideoEndoDataset(BaseDataset):
             else:
                 # Precompute IST weights
                 t_s = time.time()
-                self.ist_weights = dynerf_ist_weight(
-                    imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
-                    num_cameras=self.median_imgs.shape[0])
+                if self.maskIS:
+                    self.ist_weights = dynerf_ist_weight(
+                        imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
+                        num_cameras=self.median_imgs.shape[0], maskdir=os.path.join(self.datadir, 'gt_masks'))
+                else:
+                    self.ist_weights = dynerf_ist_weight(
+                        imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
+                        num_cameras=self.median_imgs.shape[0])
                 # Normalize into a probability distribution, to speed up sampling
                 self.ist_weights = (self.ist_weights.reshape(-1) / torch.sum(self.ist_weights))
                 torch.save(self.ist_weights, os.path.join(datadir, f"ist_weights.pt"))

@@ -146,6 +146,9 @@ def main():
 
     pprint.pprint(config)
     if validate_only or render_only:
+        if args.log_dir is None:
+            args.log_dir = os.path.join(config['logdir'], config['expname'])
+        print('log_dir:', args.log_dir)
         assert args.log_dir is not None and os.path.isdir(args.log_dir)
     else:
         save_config(config)
@@ -159,6 +162,8 @@ def main():
         trainer.load_model(torch.load(checkpoint_path), training_needed=training_needed)
 
     if validate_only:
+        if config['endo'] == True:
+            trainer.validate_endo(config['data_dirs'][0], os.path.join(config['logdir'], config['expname']))
         trainer.validate()
     elif render_only:
         render_to_path(trainer, extra_name="")
