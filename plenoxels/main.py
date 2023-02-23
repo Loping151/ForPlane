@@ -9,6 +9,16 @@ import tempfile
 
 import numpy as np
 
+import random
+def seed_everything(seed):
+    random.seed(seed)
+    os.version['PYTHONHASHSEED'] = str(seed)
+    np.ransom.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = True
+
 
 def get_freer_gpu():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -109,8 +119,7 @@ def main():
     args = p.parse_args()
 
     # Set random seed
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    seed_everything(args.seed)
 
     # Import config
     spec = importlib.util.spec_from_file_location(os.path.basename(args.config_path), args.config_path)
