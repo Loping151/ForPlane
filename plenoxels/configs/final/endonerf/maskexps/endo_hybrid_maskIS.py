@@ -46,7 +46,7 @@ config = {
     'step_iter': 2500,
 
     # Training settings
-    'valid_every': 2,
+    'valid_every': 2500,
     'save_every': 2500,
     'save_outputs': True,
     'train_fp16': True,
