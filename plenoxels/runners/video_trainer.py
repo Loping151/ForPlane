@@ -280,6 +280,8 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
         isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
         near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
         scene_bbox=kwargs['scene_bbox'],
+        maskIS = kwargs.get('maskIS', False),
+        use_gt_mask = kwargs.get('use_gt_mask', False),
     )
     else:
         log.info(f"Loading Video360Dataset with downsample={data_downsample}")
@@ -315,6 +317,8 @@ def init_ts_data(data_dir, split, **kwargs):
             contraction=kwargs['contract'], ndc=kwargs['ndc'],
             near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
             scene_bbox=kwargs['scene_bbox'],
+            maskIS = kwargs.get('maskIS', False),
+            use_gt_mask = kwargs.get('use_gt_mask', False),
         )
     else:
         ts_dset = Video360Dataset(

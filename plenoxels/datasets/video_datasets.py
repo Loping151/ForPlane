@@ -51,6 +51,8 @@ class VideoEndoDataset(BaseDataset):
         self.ist = False
         self.maskIS = kwargs.get('maskIS', False),
         self.use_mask = kwargs.get('use_gt_mask', False),
+        self.maskIS = self.maskIS[0]
+        self.use_mask = self.use_mask[0]
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
@@ -217,7 +219,7 @@ class VideoEndoDataset(BaseDataset):
         self.isg_weights = None
         self.ist_weights = None
         if split == "train" and dset_type == 'llff':  # Only use importance sampling with DyNeRF videos
-            if os.path.exists(os.path.join(datadir, f"isg_weights.pt")):
+            if os.path.exists(os.path.join(datadir, f"isg_weights.pt")) and False: # I don't recommend loading
                 self.isg_weights = torch.load(os.path.join(datadir, f"isg_weights.pt"))
                 log.info(f"Reloaded {self.isg_weights.shape[0]} ISG weights from file.")
             else:
@@ -238,7 +240,7 @@ class VideoEndoDataset(BaseDataset):
                 t_e = time.time()
                 log.info(f"Computed {self.isg_weights.shape[0]} ISG weights in {t_e - t_s:.2f}s.")
 
-            if os.path.exists(os.path.join(datadir, f"ist_weights.pt")):
+            if os.path.exists(os.path.join(datadir, f"ist_weights.pt")) and False: # I don't recommend loading
                 self.ist_weights = torch.load(os.path.join(datadir, f"ist_weights.pt"))
                 log.info(f"Reloaded {self.ist_weights.shape[0]} IST weights from file.")
             else:
