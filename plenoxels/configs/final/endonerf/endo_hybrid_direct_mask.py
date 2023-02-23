@@ -5,8 +5,8 @@ config = {
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'endo_hybrid_maskIS',
-    'logdir': './logs/endo_hybrid_maskIS',
+    'expname': 'endo_hybrid_direct_mask',
+    'logdir': './logs/endo_hybrid_direct_mask',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -14,13 +14,13 @@ config = {
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
-    'isg': True,
-    'isg_step': 1,
-    'ist_step': 2500,
+    'isg': False,
+    'isg_step': -1,
+    'ist_step': -1,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
-    'maskIS': True,
+    'use_gt_mask': True,
     'near_scaling': 0.95,
 
     # Optimization settings

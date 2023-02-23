@@ -144,6 +144,8 @@ def main():
     if validate_only and spacetime_only:
         raise ValueError("validate_only and spacetime_only are mutually exclusive.")
 
+    assert not('mask' in config and 'maskIS' in config)
+
     pprint.pprint(config)
     if validate_only or render_only:
         if args.log_dir is None:
