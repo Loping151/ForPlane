@@ -61,7 +61,6 @@ class VideoEndoDataset(BaseDataset):
         self.near_scaling = near_scaling
         self.ndc_far = ndc_far
         self.median_imgs = None
-        self.gt_masks = None
         self.mask_weights = None
 
         if contraction and ndc:
@@ -148,7 +147,6 @@ class VideoEndoDataset(BaseDataset):
                 timestamps = torch.linspace(0, 299, len(paths_img))
                 
                 imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [imgs, masks, depths]]
-                self.gt_masks = self.masks.clone()
                 # we use near and far to normalize depth
                 self.close_depth = percentile_torch(self.depths, 3)
                 self.inf_depth = percentile_torch(self.depths, 99.9)
@@ -166,7 +164,7 @@ class VideoEndoDataset(BaseDataset):
                 self.median_imgs, _ = torch.median(imgs.reshape((len(paths_img), intrinsics.height, intrinsics.width, 3)), dim=0)
                 self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
 
-                self.mask_weights = self.gt_masks.clone()
+                self.mask_weights = self.masks.clone()
                 self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu")).unsqueeze(-1)
 
                 self.mask_weights = self.mask_weights.reshape(1, *self.mask_weights.shape)
@@ -184,7 +182,7 @@ class VideoEndoDataset(BaseDataset):
             self.global_translation = torch.tensor([0, 0, 2.])
             self.global_scale = torch.tensor([0.5, 0.6, 1])
             # Normalize timestamps between -1, 1
-            timestamps = (timestamps.float() / 299) * 2 - 1
+            timestamps = (timestamps.float() / max(timestamps)) * 2 - 1
         else:
             raise ValueError(datadir)
         
@@ -351,9 +349,6 @@ class VideoEndoDataset(BaseDataset):
 
         if self.imgs is not None:
             out['imgs'] = (self.imgs[index] / 255.0).view(-1, self.imgs.shape[-1])
-
-        if self.gt_masks is not None:
-            out['masks'] = self.gt_masks
 
         c2w = self.poses[image_id]                                    # [num_rays or 1, 3, 4]
         camera_dirs = stack_camera_dirs(x, y, self.intrinsics, True)  # [num_rays, 3]

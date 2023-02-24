@@ -171,11 +171,11 @@ class VideoTrainer(BaseTrainer):
 
         device = torch.device("cpu")
         stdshape = (len(dataset), dataset.img_h, dataset.img_w, 3)
-        masks = (dataset.masks/255).reshape(stdshape[:-1])
+        masks = (dataset.masks).reshape(stdshape[:-1])
         masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
         gts = (dataset.imgs/255).reshape(stdshape)
         # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
-        gts = np.stack(gts, axis=0).astype(np.float32)
+        gts = np.stack(gts, axis=0).astype(np.float64)
 
         # gt_dir = os.path.join(data_dirs, 'images')
         # mask_dir = os.path.join(data_dirs, 'gt_masks')
@@ -263,11 +263,10 @@ class VideoTrainer(BaseTrainer):
         # gt_list = [gt_list[i] for i in indexex]
         # mask_list = [mask_list[i] for i in indexex]
 
-        imgs = np.stack(img_list, axis=0).astype(np.float32)
-        print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
+        imgs = np.stack(img_list, axis=0).astype(np.float64)
         gts = torch.Tensor(gts).to(device) * masks
         imgs = torch.Tensor(imgs).to(device) * masks
-
+        print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
         print('running endo eval')
         mse = img2mse(imgs, gts)
         psnr = mse2psnr(mse)

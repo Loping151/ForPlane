@@ -173,9 +173,9 @@ def main():
         trainer.load_model(torch.load(checkpoint_path), training_needed=training_needed)
 
     if validate_only:
-        if config['endo'] == True:
-            trainer.validate_endo()
-        # trainer.validate()
+        # if config['endo'] == True:
+        #     trainer.validate_endo()
+        trainer.validate()
     elif render_only:
         render_to_path(trainer, extra_name="")
     elif spacetime_only:
