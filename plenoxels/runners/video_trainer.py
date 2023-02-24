@@ -172,6 +172,7 @@ class VideoTrainer(BaseTrainer):
         device = torch.device("cpu")
         stdshape = (len(dataset), dataset.img_h, dataset.img_w, 3)
         masks = (dataset.masks).reshape(stdshape[:-1])
+        flip_mask = np.array(masks.clone())
         masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
         gts = (dataset.imgs/255).reshape(stdshape)
         # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
@@ -197,7 +198,7 @@ class VideoTrainer(BaseTrainer):
                 out_depths.append(out_depth)
             for k, v in out_metrics.items():
                 per_scene_metrics[k].append(v)
-            img_list.append(out_pred)
+            img_list.append(out_pred.clone())
         # for img_idx, data in tqdm(enumerate(dataset)):
         #     preds = self.eval_step(data)
         #     if isinstance(dataset.img_h, int):
@@ -231,6 +232,10 @@ class VideoTrainer(BaseTrainer):
             #     [f[:dataset.img_h, :, :] for f in pred_frames],
             #     [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
             # )
+            for i in range(len(pred_frames)):
+                for j in range(3):
+                    pred_frames[i][:, :dataset.img_w, j] =  pred_frames[i][:, :dataset.img_w, j] * flip_mask[i]
+                    pred_frames[i][:, dataset.img_w: 2*dataset.img_w, j] =  pred_frames[i][:, dataset.img_w: 2*dataset.img_w, j] * flip_mask[i]
             per_scene_metrics["FLIP"] = metrics.flip(
                 [f[:, :dataset.img_w, :] for f in pred_frames],
                 [f[:, dataset.img_w: 2*dataset.img_w, :] for f in pred_frames],
@@ -335,7 +340,7 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
         near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
         scene_bbox=kwargs['scene_bbox'],
         maskIS = kwargs.get('maskIS', False),
-        use_gt_mask = kwargs.get('use_gt_mask', False),
+        sample_from_masks = kwargs.get('sample_from_masks', False),
     )
     else:
         log.info(f"Loading Video360Dataset with downsample={data_downsample}")
@@ -372,7 +377,7 @@ def init_ts_data(data_dir, split, **kwargs):
             near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
             scene_bbox=kwargs['scene_bbox'],
             maskIS = kwargs.get('maskIS', False),
-            use_gt_mask = kwargs.get('use_gt_mask', False),
+            sample_from_masks = kwargs.get('sample_from_masks', False),
         )
     else:
         ts_dset = Video360Dataset(
