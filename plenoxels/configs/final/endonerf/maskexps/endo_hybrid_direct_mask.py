@@ -10,7 +10,7 @@ config = {
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/pulling_soft_tissues'],
+    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
@@ -20,7 +20,7 @@ config = {
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
-    'use_gt_mask': True,
+    'sample_from_masks': True,
     'near_scaling': 0.95,
 
     # Optimization settings

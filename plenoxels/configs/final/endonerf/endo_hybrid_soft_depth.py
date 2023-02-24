@@ -5,7 +5,7 @@ config = {
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/pulling_soft_tissues'],
+    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,

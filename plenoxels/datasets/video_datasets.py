@@ -50,10 +50,10 @@ class VideoEndoDataset(BaseDataset):
         self.isg = isg
         self.ist = False
         self.maskIS = kwargs.get('maskIS', False),
-        self.use_mask = kwargs.get('use_gt_mask', False),
+        self.sample_from_masks = kwargs.get('sample_from_masks', False),
         self.maskIS = self.maskIS[0]
-        self.use_mask = self.use_mask[0]
-        assert not(self.maskIS and self.use_mask)
+        self.sample_from_masks = self.sample_from_masks[0]
+        assert not(self.maskIS and self.sample_from_masks)
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
@@ -168,8 +168,6 @@ class VideoEndoDataset(BaseDataset):
                 self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu")).unsqueeze(-1)
 
                 self.mask_weights = self.mask_weights.reshape(1, *self.mask_weights.shape)
-                self.mask_weights = self.mask_weights.reshape(-1) / torch.sum(self.mask_weights)
-
 
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:
@@ -237,7 +235,7 @@ class VideoEndoDataset(BaseDataset):
                 if self.maskIS:
                     self.isg_weights = dynerf_isg_weight(
                         imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
-                        median_imgs=self.median_imgs, gamma=gamma, maskdir=os.path.join(self.datadir, 'gt_masks'))
+                        median_imgs=self.median_imgs, gamma=gamma, masks = self.masks.view(-1, intrinsics.height, intrinsics.width))
                 else:
                     self.isg_weights = dynerf_isg_weight(
                         imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
@@ -257,7 +255,7 @@ class VideoEndoDataset(BaseDataset):
                 if self.maskIS:
                     self.ist_weights = dynerf_ist_weight(
                         imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
-                        num_cameras=self.median_imgs.shape[0], maskdir=os.path.join(self.datadir, 'gt_masks'))
+                        num_cameras=self.median_imgs.shape[0], masks = self.masks.view(-1, intrinsics.height, intrinsics.width))
                 else:
                     self.ist_weights = dynerf_ist_weight(
                         imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
@@ -269,7 +267,7 @@ class VideoEndoDataset(BaseDataset):
                 log.info(f"Computed {self.ist_weights.shape[0]} IST weights in {t_e - t_s:.2f}s.")
         if self.isg:
             self.enable_isg()
-        if self.use_mask is True:
+        if self.sample_from_masks:
             self.enable_mask()
         log.info(f"VideoDataset contracted={self.is_contracted}, ndc={self.is_ndc}. "
                  f"Loaded {self.split} set from {self.datadir}: "
@@ -286,8 +284,12 @@ class VideoEndoDataset(BaseDataset):
         log.info(f"Enabled ISG weights.")
 
     def enable_mask(self):
-        self.sampling_weights = self.mask_weights
-        log.info(f"Using masks as weights.") 
+        freq = (1 - self.mask_weights).sum(0)
+        p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
+        mask_weights = self.mask_weights * (1.0 + p)
+        mask_weights = mask_weights.reshape(-1) / torch.sum(mask_weights)
+        self.sampling_weights =  mask_weights
+        log.info(f"Using masks as weights in endonerf's method.") 
 
     def switch_isg2ist(self):
         self.isg = False
@@ -797,12 +799,18 @@ def load_llffvideo_data(videopaths: List[str],
 
 
 @torch.no_grad()
-def dynerf_isg_weight(imgs, median_imgs, gamma, maskdir = None):
+def dynerf_isg_weight(imgs, median_imgs, gamma, masks = None):
     # imgs is [num_cameras * num_frames, h, w, 3]
     # median_imgs is [num_cameras, h, w, 3]
     assert imgs.dtype == torch.uint8
     assert median_imgs.dtype == torch.uint8
     num_cameras, h, w, c = median_imgs.shape
+    if masks is not None:
+        for i in range(len(masks)):
+            for j in range(3):
+                imgs[i, :, :, j] = imgs[i, :, :, j]*(1-masks[i])
+        median_imgs, _ = torch.median(imgs.reshape(-1, h, w, 3), dim=0)
+        median_imgs = median_imgs.reshape(1, *median_imgs.shape)
     squarediff = (
         imgs.view(num_cameras, -1, h, w, c)
             .float()  # creates new tensor, so later operations can be in-place
@@ -816,20 +824,23 @@ def dynerf_isg_weight(imgs, median_imgs, gamma, maskdir = None):
     # squarediff = torch.square_(differences)
     psidiff = squarediff.div_(squarediff + gamma**2)
     psidiff = (1./3) * torch.sum(psidiff, dim=-1)  # [num_cameras, num_frames, h, w]
-    if maskdir is not None:
+    if masks is not None:
         print('mask_isg')
-        mask_list = [imageio.imread(os.path.join(maskdir, fn)) for fn in sorted(os.listdir(maskdir)) if fn.endswith('.png')]
-        assert len(mask_list) == psidiff.shape[1]
-        masks = np.stack(mask_list, axis=0).astype(np.float64) / 255.0
+        assert len(masks) == psidiff.shape[1]
+        masks = np.stack(masks, axis=0).astype(np.float64)
         for i in range(len(masks)):
             psidiff[0][i] *= (1-masks[i])
     return psidiff  # valid probabilities, each in [0, 1]
 
 
 @torch.no_grad()
-def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, maskdir = None):  # DyNerf uses alpha=0.1
+def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks = None):  # DyNerf uses alpha=0.1
     assert imgs.dtype == torch.uint8
     N, h, w, c = imgs.shape
+    if masks is not None:
+        for i in range(len(masks)):
+            for j in range(3):
+                imgs[i, :, :, j] = imgs[i, :, :, j]*(1-masks[i])
     frames = imgs.view(num_cameras, -1, h, w, c).float()  # [num_cameras, num_timesteps, h, w, 3]
     max_diff = None
     shifts = list(range(frame_shift + 1))[1:]
@@ -844,11 +855,10 @@ def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, maskdir = No
     max_diff = torch.mean(max_diff, dim=-1)  # [num_timesteps, h, w]
     max_diff = max_diff.clamp_(min=alpha)
     # print(max_diff, max_diff.shape)
-    if maskdir is not None:
+    if masks is not None:
         print('mask_ist')
-        mask_list = [imageio.imread(os.path.join(maskdir, fn)) for fn in sorted(os.listdir(maskdir)) if fn.endswith('.png')]
-        assert len(mask_list) == max_diff.shape[1]
-        masks = np.stack(mask_list, axis=0).astype(np.float64) / 255.0
+        assert len(masks) == max_diff.shape[1]
+        masks = np.stack(masks, axis=0).astype(np.float64)
         for i in range(len(masks)):
             max_diff[0][i] *= (1-masks[i])
     return max_diff
