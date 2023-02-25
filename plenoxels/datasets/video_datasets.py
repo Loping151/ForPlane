@@ -62,6 +62,7 @@ class VideoEndoDataset(BaseDataset):
         self.ndc_far = ndc_far
         self.median_imgs = None
         self.mask_weights = None
+        self.p = None # p is the additional weight
 
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
@@ -168,7 +169,10 @@ class VideoEndoDataset(BaseDataset):
                 self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu")).unsqueeze(-1)
 
                 self.mask_weights = self.mask_weights.reshape(1, *self.mask_weights.shape)
-
+                freq = (1 - self.mask_weights).sum(0)
+                self.p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
+                self.mask_weights = self.mask_weights * (1.0 + self.p)
+                self.mask_weights = self.mask_weights.reshape(-1) / torch.sum(self.mask_weights)
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:
                 #     self.per_cam_near_fars = per_cam_near_fars.float()
@@ -224,47 +228,73 @@ class VideoEndoDataset(BaseDataset):
 
         self.isg_weights = None
         self.ist_weights = None
+
         if split == "train" and dset_type == 'llff':  # Only use importance sampling with DyNeRF videos
-            if os.path.exists(os.path.join(datadir, f"isg_weights.pt")) and False: # I don't recommend loading
-                self.isg_weights = torch.load(os.path.join(datadir, f"isg_weights.pt"))
-                log.info(f"Reloaded {self.isg_weights.shape[0]} ISG weights from file.")
-            else:
-                # Precompute ISG weights
-                t_s = time.time()
-                gamma = 1e-3 if self.keyframes else 2e-2
-                if self.maskIS:
+            if self.maskIS:
+                if os.path.exists(os.path.join(datadir, f"isg_weights_masked.pt")):
+                    self.isg_weights = torch.load(os.path.join(datadir, f"isg_weights_masked.pt"))
+                    log.info(f"Reloaded {self.isg_weights.shape[0]} ISG weights masked from file.")
+                else:
+                    # Precompute ISG weights
+                    t_s = time.time()
+                    gamma = 1e-3 if self.keyframes else 2e-2
                     self.isg_weights = dynerf_isg_weight(
                         imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
                         median_imgs=self.median_imgs, gamma=gamma, masks = self.masks.view(-1, intrinsics.height, intrinsics.width))
+                    # Normalize into a probability distribution, to speed up sampling
+                    self.isg_weights = (self.isg_weights.reshape(-1) / torch.sum(self.isg_weights))
+                    torch.save(self.isg_weights, os.path.join(datadir, f"isg_weights_masked.pt"))
+                    t_e = time.time()
+                    log.info(f"Computed {self.isg_weights.shape[0]} ISG weights masked in {t_e - t_s:.2f}s.")
+            else:
+                if os.path.exists(os.path.join(datadir, f"isg_weights.pt")):
+                    self.isg_weights = torch.load(os.path.join(datadir, f"isg_weights.pt"))
+                    log.info(f"Reloaded {self.isg_weights.shape[0]} ISG weights from file.")
                 else:
+                    # Precompute ISG weights
+                    t_s = time.time()
+                    gamma = 1e-3 if self.keyframes else 2e-2
                     self.isg_weights = dynerf_isg_weight(
                         imgs.view(-1, intrinsics.height, intrinsics.width, imgs.shape[-1]),
                         median_imgs=self.median_imgs, gamma=gamma)
-                # Normalize into a probability distribution, to speed up sampling
-                self.isg_weights = (self.isg_weights.reshape(-1) / torch.sum(self.isg_weights))
-                torch.save(self.isg_weights, os.path.join(datadir, f"isg_weights.pt"))
-                t_e = time.time()
-                log.info(f"Computed {self.isg_weights.shape[0]} ISG weights in {t_e - t_s:.2f}s.")
+                    # Normalize into a probability distribution, to speed up sampling
+                    self.isg_weights = (self.isg_weights.reshape(-1) / torch.sum(self.isg_weights))
+                    torch.save(self.isg_weights, os.path.join(datadir, f"isg_weights.pt"))
+                    t_e = time.time()
+                    log.info(f"Computed {self.isg_weights.shape[0]} ISG weights in {t_e - t_s:.2f}s.")
 
-            if os.path.exists(os.path.join(datadir, f"ist_weights.pt")) and False: # I don't recommend loading
-                self.ist_weights = torch.load(os.path.join(datadir, f"ist_weights.pt"))
-                log.info(f"Reloaded {self.ist_weights.shape[0]} IST weights from file.")
-            else:
-                # Precompute IST weights
-                t_s = time.time()
-                if self.maskIS:
+
+            if self.maskIS:
+                if os.path.exists(os.path.join(datadir, f"ist_weights_masked.pt")):
+                    self.ist_weights = torch.load(os.path.join(datadir, f"ist_weights_masked.pt"))
+                    log.info(f"Reloaded {self.ist_weights.shape[0]} IST weights nasked from file.")
+                else:
+                    # Precompute IST weights
+                    t_s = time.time()
                     self.ist_weights = dynerf_ist_weight(
                         imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
                         num_cameras=self.median_imgs.shape[0], masks = self.masks.view(-1, intrinsics.height, intrinsics.width))
+                    # Normalize into a probability distribution, to speed up sampling
+                    self.ist_weights = (self.ist_weights.reshape(-1) / torch.sum(self.ist_weights))
+                    torch.save(self.ist_weights, os.path.join(datadir, f"ist_weights_masked.pt"))
+                    t_e = time.time()
+                    log.info(f"Computed {self.ist_weights.shape[0]} IST weights masked in {t_e - t_s:.2f}s.")
+            else:
+                if os.path.exists(os.path.join(datadir, f"ist_weights.pt")):
+                    self.ist_weights = torch.load(os.path.join(datadir, f"ist_weights.pt"))
+                    log.info(f"Reloaded {self.ist_weights.shape[0]} IST weights from file.")
                 else:
+                    # Precompute IST weights
+                    t_s = time.time()
                     self.ist_weights = dynerf_ist_weight(
                         imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
                         num_cameras=self.median_imgs.shape[0])
-                # Normalize into a probability distribution, to speed up sampling
-                self.ist_weights = (self.ist_weights.reshape(-1) / torch.sum(self.ist_weights))
-                torch.save(self.ist_weights, os.path.join(datadir, f"ist_weights.pt"))
-                t_e = time.time()
-                log.info(f"Computed {self.ist_weights.shape[0]} IST weights in {t_e - t_s:.2f}s.")
+                    # Normalize into a probability distribution, to speed up sampling
+                    self.ist_weights = (self.ist_weights.reshape(-1) / torch.sum(self.ist_weights))
+                    torch.save(self.ist_weights, os.path.join(datadir, f"ist_weights.pt"))
+                    t_e = time.time()
+                    log.info(f"Computed {self.ist_weights.shape[0]} IST weights in {t_e - t_s:.2f}s.")
+
         if self.isg:
             self.enable_isg()
         if self.sample_from_masks:
@@ -284,11 +314,7 @@ class VideoEndoDataset(BaseDataset):
         log.info(f"Enabled ISG weights.")
 
     def enable_mask(self):
-        freq = (1 - self.mask_weights).sum(0)
-        p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
-        mask_weights = self.mask_weights * (1.0 + p)
-        mask_weights = mask_weights.reshape(-1) / torch.sum(mask_weights)
-        self.sampling_weights =  mask_weights
+        self.sampling_weights =  self.mask_weights
         log.info(f"Using masks as weights in endonerf's method.") 
 
     def switch_isg2ist(self):
@@ -825,7 +851,6 @@ def dynerf_isg_weight(imgs, median_imgs, gamma, masks = None):
     psidiff = squarediff.div_(squarediff + gamma**2)
     psidiff = (1./3) * torch.sum(psidiff, dim=-1)  # [num_cameras, num_frames, h, w]
     if masks is not None:
-        print('mask_isg')
         assert len(masks) == psidiff.shape[1]
         masks = np.stack(masks, axis=0).astype(np.float64)
         for i in range(len(masks)):
@@ -856,7 +881,6 @@ def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks = None
     max_diff = max_diff.clamp_(min=alpha)
     # print(max_diff, max_diff.shape)
     if masks is not None:
-        print('mask_ist')
         assert len(masks) == max_diff.shape[1]
         masks = np.stack(masks, axis=0).astype(np.float64)
         for i in range(len(masks)):

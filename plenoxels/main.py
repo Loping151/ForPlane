@@ -132,7 +132,6 @@ def main():
     # note that all values are strings, so code should assume incorrect data-types for anything
     # that's derived from config - and should not a string.
     overrides: List[str] = args.override
-    print(overrides)
     overrides_dict = {ovr.split("=")[0]: ovr.split("=")[1] for ovr in overrides}
     config.update(overrides_dict)
     if "keyframes" in config:
