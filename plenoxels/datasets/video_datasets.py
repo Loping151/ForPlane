@@ -49,10 +49,11 @@ class VideoEndoDataset(BaseDataset):
         self.downsample = downsample
         self.isg = isg
         self.ist = False
-        self.maskIS = kwargs.get('maskIS', False),
-        self.sample_from_masks = kwargs.get('sample_from_masks', False),
-        self.maskIS = self.maskIS[0]
-        self.sample_from_masks = self.sample_from_masks[0]
+        self.maskIS = kwargs.get('maskIS', False)
+        self.frequency_ratio = kwargs.get('frequency_ratio', None)
+        if self.maskIS:
+            assert self.frequency_ratio is not None
+        self.sample_from_masks = kwargs.get('sample_from_masks', False)
         assert not(self.maskIS and self.sample_from_masks)
         # self.lookup_time = False
         self.per_cam_near_fars = None
@@ -162,13 +163,13 @@ class VideoEndoDataset(BaseDataset):
                 # bds, torch.Size([1, 2])
                 self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
 
-                self.median_imgs, _ = torch.median(imgs.reshape((len(paths_img), intrinsics.height, intrinsics.width, 3)), dim=0)
+                self.median_imgs, _ = torch.median(imgs.reshape(len(paths_img), intrinsics.height, intrinsics.width, 3), dim=0)
                 self.median_imgs = self.median_imgs.reshape(1, *self.median_imgs.shape)
 
                 self.mask_weights = self.masks.clone()
-                self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu")).unsqueeze(-1)
+                self.mask_weights = torch.Tensor(1.0 - self.mask_weights).to(torch.device("cpu"))
 
-                self.mask_weights = self.mask_weights.reshape(1, *self.mask_weights.shape)
+                self.mask_weights = self.mask_weights.reshape(len(paths_img), intrinsics.height, intrinsics.width)
                 freq = (1 - self.mask_weights).sum(0)
                 self.p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
                 self.mask_weights = self.mask_weights * (1.0 + self.p)
@@ -273,7 +274,7 @@ class VideoEndoDataset(BaseDataset):
                     t_s = time.time()
                     self.ist_weights = dynerf_ist_weight(
                         imgs.view(-1, self.img_h, self.img_w, imgs.shape[-1]),
-                        num_cameras=self.median_imgs.shape[0], masks = self.masks.view(-1, intrinsics.height, intrinsics.width))
+                        num_cameras=self.median_imgs.shape[0], masks = self.masks.view(-1, intrinsics.height, intrinsics.width), p = self.p, ratio = self.frequency_ratio)
                     # Normalize into a probability distribution, to speed up sampling
                     self.ist_weights = (self.ist_weights.reshape(-1) / torch.sum(self.ist_weights))
                     torch.save(self.ist_weights, os.path.join(datadir, f"ist_weights_masked.pt"))
@@ -859,7 +860,7 @@ def dynerf_isg_weight(imgs, median_imgs, gamma, masks = None):
 
 
 @torch.no_grad()
-def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks = None):  # DyNerf uses alpha=0.1
+def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks = None, p = None, ratio = None):  # DyNerf uses alpha=0.1
     assert imgs.dtype == torch.uint8
     N, h, w, c = imgs.shape
     if masks is not None:
@@ -885,6 +886,7 @@ def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks = None
         masks = np.stack(masks, axis=0).astype(np.float64)
         for i in range(len(masks)):
             max_diff[0][i] *= (1-masks[i])
+            max_diff[0][i] *= (1+p*ratio)
     return max_diff
 
 @torch.jit.script
