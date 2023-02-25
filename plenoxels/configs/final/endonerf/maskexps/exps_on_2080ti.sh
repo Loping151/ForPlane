@@ -1,4 +1,4 @@
-BATCH_SIZE=32768
+BATCH_SIZE=12500
 
 # endo's ray sampling baseline
 PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endonerf/maskexps/endo_hybrid_direct_mask_cutting.py 'logdir'='./logs/endo_hybrid_direct_mask/cutting' 'batch_size'=$BATCH_SIZE

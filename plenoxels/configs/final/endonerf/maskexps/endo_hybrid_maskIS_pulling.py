@@ -21,11 +21,12 @@ config = {
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
     'maskIS': True,
+    'frequency_ratio': 1, 
     'near_scaling': 0.95,
 
     # Optimization settings
     'num_steps': 5001,
-    'batch_size': 32768//3,
+    'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
     'lr': 0.01,

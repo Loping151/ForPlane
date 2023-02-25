@@ -5,23 +5,22 @@ config = {
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'endo_hybrid_maskIS_1_1000',
-    'logdir': './logs/endo_hybrid_maskIS',
+    'expname': 'endo_hybrid_direct_mask',
+    'logdir': './logs/endo_hybrid_direct_mask',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/traction'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
-    'isg': True,
-    'isg_step': 1,
-    'ist_step': 1000,
+    'isg': False,
+    'isg_step': -1,
+    'ist_step': -1,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
-    'maskIS': True,
-    'frequency_ratio': 1, 
+    'sample_from_masks': True,
     'near_scaling': 0.95,
 
     # Optimization settings
