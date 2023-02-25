@@ -166,6 +166,7 @@ def main():
 
     data = load_data(model_type, validate_only=validate_only, render_only=render_only or spacetime_only, **config)
     config.update(data)
+    config['batch_size'] = int(config['batch_size'])
     trainer = init_trainer(model_type, **config)
     if args.log_dir is not None:
         checkpoint_path = os.path.join(args.log_dir, "model.pth")
