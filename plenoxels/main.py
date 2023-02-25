@@ -134,6 +134,7 @@ def main():
     overrides: List[str] = args.override
     overrides_dict = {ovr.split("=")[0]: ovr.split("=")[1] for ovr in overrides}
     config.update(overrides_dict)
+    config['batch_size'] = int(config['batch_size'])
     if "keyframes" in config:
         if 'endo' in config:
             model_type = 'endovideo'
@@ -166,7 +167,6 @@ def main():
 
     data = load_data(model_type, validate_only=validate_only, render_only=render_only or spacetime_only, **config)
     config.update(data)
-    config['batch_size'] = int(config['batch_size'])
     trainer = init_trainer(model_type, **config)
     if args.log_dir is not None:
         checkpoint_path = os.path.join(args.log_dir, "model.pth")
