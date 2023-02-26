@@ -4,12 +4,12 @@ import csv
 filename = "endo_log.txt"
 datalist = ['cutting', 'pulling', 'pushing', 'tearing', 'thin', 'traction']
 
-dataname = datalist[0]
+dataname = datalist[1]
 
 if os.path.exists('logs'):
     directory = "logs"
-elif os.path.exists('plenoxels'):
-    directory = "plenoxels"
+elif os.path.exists('../logs'):
+    directory = "../logs"
 
 
 file_list = []
