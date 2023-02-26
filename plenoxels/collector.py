@@ -3,7 +3,7 @@ import csv
 import argparse
 
 parser = argparse.ArgumentParser(description='Choose dataset name.')
-parser.add_argument('--index', type=str, help='from 0 to 5', default=0)
+parser.add_argument('--index', type=int, help='from 0 to 5', default=0)
 
 args = parser.parse_args()
 

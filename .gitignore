@@ -14,4 +14,4 @@ scripts/*
 # for ignore pyc
 __pycache__/
 
-all_results.csv
+*.csv
