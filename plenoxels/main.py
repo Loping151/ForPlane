@@ -135,6 +135,7 @@ def main():
     overrides_dict = {ovr.split("=")[0]: ovr.split("=")[1] for ovr in overrides}
     config.update(overrides_dict)
     config['batch_size'] = int(config['batch_size'])
+    config['num_steps'] = int(config['num_steps'])
     if "keyframes" in config:
         if 'endo' in config:
             model_type = 'endovideo'

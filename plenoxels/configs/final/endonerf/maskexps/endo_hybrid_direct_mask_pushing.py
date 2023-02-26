@@ -21,6 +21,7 @@ config = {
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
     'sample_from_masks': True,
+    'p_ratio': 1,
     'near_scaling': 0.95,
 
     # Optimization settings

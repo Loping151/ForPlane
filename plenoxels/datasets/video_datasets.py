@@ -50,6 +50,7 @@ class VideoEndoDataset(BaseDataset):
         self.isg = isg
         self.ist = False
         self.maskIS = kwargs.get('maskIS', False)
+        self.p_ratio = kwargs.get('p_ratio', 1)
         self.frequency_ratio = kwargs.get('frequency_ratio', None)
         if self.maskIS:
             assert self.frequency_ratio is not None
@@ -172,7 +173,7 @@ class VideoEndoDataset(BaseDataset):
                 self.mask_weights = self.mask_weights.reshape(len(paths_img), intrinsics.height, intrinsics.width)
                 freq = (1 - self.mask_weights).sum(0)
                 self.p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
-                self.mask_weights = self.mask_weights * (1.0 + self.p)
+                self.mask_weights = self.mask_weights * (1.0 + self.p * self.p_ratio)
                 self.mask_weights = self.mask_weights.reshape(-1) / torch.sum(self.mask_weights)
                 # timestamps = torch.cat(timestamps, 0)
                 # if contraction:

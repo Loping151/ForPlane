@@ -341,6 +341,7 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
         scene_bbox=kwargs['scene_bbox'],
         maskIS = kwargs.get('maskIS', False),
         sample_from_masks = kwargs.get('sample_from_masks', False),
+        p_ratio = kwargs.get('p_ratio', None),
         frequency_ratio = kwargs.get('frequency_ratio', None),
     )
     else:
@@ -379,6 +380,7 @@ def init_ts_data(data_dir, split, **kwargs):
             scene_bbox=kwargs['scene_bbox'],
             maskIS = kwargs.get('maskIS', False),
             sample_from_masks = kwargs.get('sample_from_masks', False),
+            p_ratio = kwargs.get('p_ratio', None),
             frequency_ratio = kwargs.get('frequency_ratio', None),
         )
     else:

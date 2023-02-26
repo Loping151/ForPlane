@@ -1,10 +1,20 @@
 import os
 import csv
+import argparse
+
+parser = argparse.ArgumentParser(description='Choose dataset name.')
+parser.add_argument('--index', type=str, help='from 0 to 5', default=0)
+
+args = parser.parse_args()
 
 filename = "endo_log.txt"
 datalist = ['cutting', 'pulling', 'pushing', 'tearing', 'thin', 'traction']
 
-dataname = datalist[1]
+if args.index is not None and args.index < len(datalist):
+    dataname = datalist[args.index]
+else:
+    print('Invalid index')
+    exit()
 
 if os.path.exists('logs'):
     directory = "logs"
@@ -18,7 +28,10 @@ for root, dirs, files in os.walk(directory):
         if file == filename:
             file_list.append(os.path.join(root, file))
 
-with open('all_results.csv', mode='w', newline='') as file:
+if not os.path.exists(os.path.join(directory, 'performance')):
+    os.mkdir(os.path.join(directory, 'performance'))
+
+with open(os.path.join(directory, 'performance','all_results.csv'), mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['dataset:'+dataname])
     writer.writerow(['expname', 'isg', 'freq_ratio', 'ist_step', 'PSNR', 'SSIM', 'LPIPS'])
