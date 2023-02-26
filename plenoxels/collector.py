@@ -20,7 +20,7 @@ for root, dirs, files in os.walk(directory):
 
 with open('all_results.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['dataset',dataname])
+    writer.writerow(['dataset:'+dataname])
     writer.writerow(['expname', 'isg', 'freq_ratio', 'ist_step', 'PSNR', 'SSIM', 'LPIPS'])
     for file_path in file_list:
         if dataname not in file_path:
