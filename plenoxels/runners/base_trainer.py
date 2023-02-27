@@ -171,6 +171,7 @@ class BaseTrainer(abc.ABC):
                 self.post_step(progress_bar=pb)
                 self.timer.check("after-step")
         finally:
+            self.save_model()
             pb.close()
             self.writer.close()
 
