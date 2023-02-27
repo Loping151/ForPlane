@@ -382,8 +382,8 @@ class KPlaneField(nn.Module):
             self.sigma_net.named_parameters(prefix="sigma_net"),
             self.direction_encoder.named_parameters(
                 prefix="direction_encoder"),
-            self.pt_encoder.named_parameters(
-                prefix="pt_encoder"),
+            # self.pt_encoder.named_parameters(
+            #     prefix="pt_encoder"),
         ]
         if self.linear_decoder:
             nn_params.append(
