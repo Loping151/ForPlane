@@ -30,10 +30,12 @@ def init_grid_param(
         reso: Sequence[int],
         a: float = 0.1,
         b: float = 0.5):
-    assert in_dim == len(reso), "Resolution must have same number of elements as input-dimension"
+    assert in_dim == len(
+        reso), "Resolution must have same number of elements as input-dimension"
     has_time_planes = in_dim == 4
     assert grid_nd <= in_dim
-    coo_combs = list(itertools.combinations(range(in_dim), grid_nd)) # [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+    # [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+    coo_combs = list(itertools.combinations(range(in_dim), grid_nd))
     grid_coefs = nn.ParameterList()
     for ci, coo_comb in enumerate(coo_combs):
         new_grid_coef = nn.Parameter(torch.empty(
@@ -65,7 +67,8 @@ def interpolate_ms_features(pts: torch.Tensor,
         interp_space = 1.
         for ci, coo_comb in enumerate(coo_combs):
             # interpolate in plane
-            feature_dim = grid[ci].shape[1]  # shape of grid[ci]: 1, out_dim, *reso
+            # shape of grid[ci]: 1, out_dim, *reso
+            feature_dim = grid[ci].shape[1]
             interp_out_plane = (
                 grid_sample_wrapper(grid[ci], pts[..., coo_comb])
                 .view(-1, feature_dim)
@@ -113,16 +116,18 @@ class KPlaneField(nn.Module):
         # 1. Init planes
         self.grids = nn.ModuleList()
         self.feature_dim = 0
-        for res in self.multiscale_res_multipliers: # [1, 2, 4, 8]
+        for res in self.multiscale_res_multipliers:  # [1, 2, 4, 8]
             # initialize coordinate grid
             config = self.grid_config[0].copy()
             # Resolution fix: multi-res only on spatial planes
-            config["resolution"] = [r * res for r in config["resolution"][:3]] + config["resolution"][3:]
+            config["resolution"] = [
+                r * res for r in config["resolution"][:3]] + config["resolution"][3:]
             gp = init_grid_param(
-                grid_nd=config["grid_dimensions"], # 2
-                in_dim=config["input_coordinate_dim"], # 4
-                out_dim=config["output_coordinate_dim"], # 16
-                reso=config["resolution"], # [64, 64, 64, 32]->[128, 128, 128, 32]->[256, 256, 256, 32]->[512, 512, 512, 32]
+                grid_nd=config["grid_dimensions"],  # 2
+                in_dim=config["input_coordinate_dim"],  # 4
+                out_dim=config["output_coordinate_dim"],  # 16
+                # [64, 64, 64, 32]->[128, 128, 128, 32]->[256, 256, 256, 32]->[512, 512, 512, 32]
+                reso=config["resolution"],
             )
             # shape[1] is out-dim - Concatenate over feature len for each scale
             if self.concat_features:
@@ -141,13 +146,31 @@ class KPlaneField(nn.Module):
             assert self.num_images is not None
             self.appearance_embedding_dim = appearance_embedding_dim
             # this will initialize as normal_(0.0, 1.0)
-            self.appearance_embedding = nn.Embedding(self.num_images, self.appearance_embedding_dim)
+            self.appearance_embedding = nn.Embedding(
+                self.num_images, self.appearance_embedding_dim)
         else:
             self.appearance_embedding_dim = 0
 
         # 3. Init decoder params if 'disable_view_encoder' is True, use Indentity as encoder
-        self.disable_view_dir = self.grid_config[0].get('disable_view_encoder', False)
-
+        self.disable_view_dir = self.grid_config[0].get(
+            'disable_view_encoder', False)
+        # get encode info to determine what to encode
+        self.encode_info = {}
+        self.pt_encoded_dim = 0
+        if len(self.grid_config) > 1:
+            assert self.encode_info.get('encode_items', None) in [
+                None, 'xyzt', 'xyz', 'xyt', 'xyz']
+            self.encode_info = self.grid_config[1].copy()
+        if self.encode_info.get('encode_items', None) is not None:
+            self.pt_encoder = tcnn.Encoding(
+                n_input_dims=len(self.encode_info.get('encode_items')),
+                encoding_config={
+                    "otype": "Frequency",
+                    "n_frequencies": self.encode_info.get('n_frequencies', 12),
+                },
+            )
+            self.pt_encoded_dim = len(self.encode_info.get(
+                'encode_items')) * 2 * self.encode_info.get('n_frequencies', 12)
         if not self.disable_view_dir:
             self.direction_encoder = tcnn.Encoding(
                 n_input_dims=3,
@@ -169,7 +192,8 @@ class KPlaneField(nn.Module):
             # combining the color features into RGB
             # This architecture is based on instant-NGP
             self.color_basis = tcnn.Network(
-                n_input_dims=3 + self.appearance_embedding_dim, #self.direction_encoder.n_output_dims,
+                # self.direction_encoder.n_output_dims,
+                n_input_dims=3 + self.appearance_embedding_dim,
                 n_output_dims=3 * self.feature_dim,
                 network_config={
                     "otype": "FullyFusedMLP",
@@ -205,9 +229,10 @@ class KPlaneField(nn.Module):
                 },
             )
             self.in_dim_color = (
-                    direction_encoder_n_output_dims
-                    + self.geo_feat_dim
-                    + self.appearance_embedding_dim
+                direction_encoder_n_output_dims
+                + self.geo_feat_dim
+                + self.appearance_embedding_dim
+                + self.pt_encoded_dim
             )
             self.color_net = tcnn.Network(
                 n_input_dims=self.in_dim_color,
@@ -223,15 +248,18 @@ class KPlaneField(nn.Module):
 
     def get_density(self, pts: torch.Tensor, timestamps: Optional[torch.Tensor] = None):
         """Computes and returns the densities."""
-        if self.spatial_distortion is not None: # is None
+        if self.spatial_distortion is not None:  # is None
             pts = self.spatial_distortion(pts)
             pts = pts / 2  # from [-2, 2] to [-1, 1]
         else:
-            pts = normalize_aabb(pts, self.aabb) # this operation can be aviod. because pts is already normalized TODO: remove this
+            # this operation can be aviod. because pts is already normalized TODO: remove this
+            pts = normalize_aabb(pts, self.aabb)
         n_rays, n_samples = pts.shape[:2]
         if timestamps is not None:
-            timestamps = timestamps[:, None].expand(-1, n_samples)[..., None]  # [n_rays, n_samples, 1]
-            pts = torch.cat((pts, timestamps), dim=-1)  # [n_rays, n_samples, 4]
+            # [n_rays, n_samples, 1]
+            timestamps = timestamps[:, None].expand(-1, n_samples)[..., None]
+            # [n_rays, n_samples, 4]
+            pts = torch.cat((pts, timestamps), dim=-1)
 
         pts = pts.reshape(-1, pts.shape[-1])
         features = interpolate_ms_features(
@@ -259,7 +287,8 @@ class KPlaneField(nn.Module):
         camera_indices = None
         if self.use_appearance_embedding:
             if timestamps is None:
-                raise AttributeError("timestamps (appearance-ids) are not provided.")
+                raise AttributeError(
+                    "timestamps (appearance-ids) are not provided.")
             camera_indices = timestamps
             timestamps = None
         density, features = self.get_density(pts, timestamps)
@@ -267,43 +296,61 @@ class KPlaneField(nn.Module):
 
         directions = directions.view(-1, 1, 3).expand(pts.shape).reshape(-1, 3)
         if not self.linear_decoder:
-            if not self.disable_view_dir: # only valid in the case of not linear decoder
+            if not self.disable_view_dir:  # only valid in the case of not linear decoder
                 directions = get_normalized_directions(directions)
                 encoded_directions = self.direction_encoder(directions)
-                color_features = [encoded_directions, features.view(-1, self.geo_feat_dim)]
-            else: # no view direction embedding
+                color_features = [encoded_directions,
+                                  features.view(-1, self.geo_feat_dim)]
+            elif self.encode_info.get('encode_items', None) is not None:
+                xyz = {'x': 0, 'y': 1, 'z': 2}
+                if 't' in self.encode_info.get('encode_items'):
+                    encoded_items = torch.cat((pts.reshape(-1, pts.shape[-1])[:, [
+                                              xyz[i] for i in self.encode_info.get('encode_items') if i != 't']], torch.repeat_interleave(timestamps, repeats=pts.shape[1]).reshape(-1, 1)), dim=1)
+                else:
+                    encoded_items = pts.reshape(-1, pts.shape[-1])[:, [
+                        xyz[i] for i in self.encode_info.get('encode_items') if i != 't']]
+                encoded_pt = self.pt_encoder(encoded_items)
+                color_features = [encoded_pt,
+                                  features.view(-1, self.geo_feat_dim)]
+            else:  # no view direction embedding
                 color_features = [features]
-        else: # linear decoder
+        else:  # linear decoder
             color_features = [features]
 
         if self.use_appearance_embedding:
             if camera_indices.dtype == torch.float32:
                 # Interpolate between two embeddings. Currently they are hardcoded below.
-                #emb1_idx, emb2_idx = 100, 121  # trevi
+                # emb1_idx, emb2_idx = 100, 121  # trevi
                 emb1_idx, emb2_idx = 11, 142  # sacre
                 emb_fn = self.appearance_embedding
-                emb1 = emb_fn(torch.full_like(camera_indices, emb1_idx, dtype=torch.long))
+                emb1 = emb_fn(torch.full_like(
+                    camera_indices, emb1_idx, dtype=torch.long))
                 emb1 = emb1.view(emb1.shape[0], emb1.shape[2])
-                emb2 = emb_fn(torch.full_like(camera_indices, emb2_idx, dtype=torch.long))
+                emb2 = emb_fn(torch.full_like(
+                    camera_indices, emb2_idx, dtype=torch.long))
                 emb2 = emb2.view(emb2.shape[0], emb2.shape[2])
                 embedded_appearance = torch.lerp(emb1, emb2, camera_indices)
             elif self.training:
                 embedded_appearance = self.appearance_embedding(camera_indices)
             else:
                 if hasattr(self, "test_appearance_embedding"):
-                    embedded_appearance = self.test_appearance_embedding(camera_indices)
+                    embedded_appearance = self.test_appearance_embedding(
+                        camera_indices)
                 elif self.use_average_appearance_embedding:
                     embedded_appearance = torch.ones(
-                        (*directions.shape[:-1], self.appearance_embedding_dim), device=directions.device
+                        (*directions.shape[:-1],
+                         self.appearance_embedding_dim), device=directions.device
                     ) * self.appearance_embedding.mean(dim=0)
                 else:
                     embedded_appearance = torch.zeros(
-                        (*directions.shape[:-1], self.appearance_embedding_dim), device=directions.device
+                        (*directions.shape[:-1],
+                         self.appearance_embedding_dim), device=directions.device
                     )
 
             # expand embedded_appearance from n_rays, dim to n_rays*n_samples, dim
             ea_dim = embedded_appearance.shape[-1]
-            embedded_appearance = embedded_appearance.view(-1, 1, ea_dim).expand(n_rays, n_samples, -1).reshape(-1, ea_dim)
+            embedded_appearance = embedded_appearance.view(
+                -1, 1, ea_dim).expand(n_rays, n_samples, -1).reshape(-1, ea_dim)
             if not self.linear_decoder:
                 color_features.append(embedded_appearance)
 
@@ -311,28 +358,39 @@ class KPlaneField(nn.Module):
 
         if self.linear_decoder:
             if self.use_appearance_embedding:
-                basis_values = self.color_basis(torch.cat([directions, embedded_appearance], dim=-1))
+                basis_values = self.color_basis(
+                    torch.cat([directions, embedded_appearance], dim=-1))
             else:
-                basis_values = self.color_basis(directions)  # [batch, color_feature_len * 3]
-            basis_values = basis_values.view(color_features.shape[0], 3, -1)  # [batch, 3, color_feature_len]
-            rgb = torch.sum(color_features[:, None, :] * basis_values, dim=-1)  # [batch, 3]
+                # [batch, color_feature_len * 3]
+                basis_values = self.color_basis(directions)
+            # [batch, 3, color_feature_len]
+            basis_values = basis_values.view(color_features.shape[0], 3, -1)
+            rgb = torch.sum(
+                color_features[:, None, :] * basis_values, dim=-1)  # [batch, 3]
             rgb = rgb.to(directions)
             rgb = torch.sigmoid(rgb).view(n_rays, n_samples, 3)
         else:
-            rgb = self.color_net(color_features).to(directions).view(n_rays, n_samples, 3)
+            rgb = self.color_net(color_features).to(
+                directions).view(n_rays, n_samples, 3)
 
         return {"rgb": rgb, "density": density}
 
     def get_params(self):
-        field_params = {k: v for k, v in self.grids.named_parameters(prefix="grids")}
+        field_params = {k: v for k,
+                        v in self.grids.named_parameters(prefix="grids")}
         nn_params = [
             self.sigma_net.named_parameters(prefix="sigma_net"),
-            self.direction_encoder.named_parameters(prefix="direction_encoder"),
+            self.direction_encoder.named_parameters(
+                prefix="direction_encoder"),
+            self.pt_encoder.named_parameters(
+                prefix="pt_encoder"),
         ]
         if self.linear_decoder:
-            nn_params.append(self.color_basis.named_parameters(prefix="color_basis"))
+            nn_params.append(
+                self.color_basis.named_parameters(prefix="color_basis"))
         else:
-            nn_params.append(self.color_net.named_parameters(prefix="color_net"))
+            nn_params.append(
+                self.color_net.named_parameters(prefix="color_net"))
         nn_params = {k: v for plist in nn_params for k, v in plist}
         other_params = {k: v for k, v in self.named_parameters() if (
             k not in nn_params.keys() and k not in field_params.keys()

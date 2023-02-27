@@ -1,3 +1,10 @@
+from plenoxels.utils.parse_args import parse_optfloat
+from plenoxels.utils.create_rendering import render_to_path, decompose_space_time
+from plenoxels.runners import static_trainer
+from plenoxels.runners import phototourism_trainer
+from plenoxels.runners import video_trainer
+import torch.utils.data
+import torch
 import argparse
 import importlib.util
 import logging
@@ -6,10 +13,11 @@ import pprint
 import sys
 from typing import List, Dict, Any
 import tempfile
-
 import numpy as np
 
 import random
+
+
 def seed_everything(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -23,12 +31,16 @@ def seed_everything(seed):
 def get_freer_gpu():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_fname = os.path.join(tmpdir, "tmp")
-        os.system(f'nvidia-smi -q -d Memory |grep -A5 GPU|grep Free >"{tmp_fname}"')
+        os.system(
+            f'nvidia-smi -q -d Memory |grep -A5 GPU|grep Free >"{tmp_fname}"')
         if os.path.isfile(tmp_fname):
-            memory_available = [int(x.split()[2]) for x in open(tmp_fname, 'r').readlines()]
+            memory_available = [int(x.split()[2])
+                                for x in open(tmp_fname, 'r').readlines()]
             if len(memory_available) > 0:
                 return np.argmax(memory_available)
-    return None  # The grep doesn't work with all GPUs. If it fails we ignore it.
+    # The grep doesn't work with all GPUs. If it fails we ignore it.
+    return None
+
 
 gpu = get_freer_gpu()
 if gpu is not None:
@@ -36,14 +48,6 @@ if gpu is not None:
     print(f"CUDA_VISIBLE_DEVICES set to {gpu}")
 else:
     print(f"Did not set GPU.")
-
-import torch
-import torch.utils.data
-from plenoxels.runners import video_trainer
-from plenoxels.runners import phototourism_trainer
-from plenoxels.runners import static_trainer
-from plenoxels.utils.create_rendering import render_to_path, decompose_space_time
-from plenoxels.utils.parse_args import parse_optfloat
 
 
 def setup_logging(log_level=logging.INFO):
@@ -82,7 +86,8 @@ def init_trainer(model_type: str, **kwargs):
         return video_trainer.VideoTrainer(**kwargs)
     elif model_type == "endovideo":
         from plenoxels.runners import video_trainer
-        return video_trainer.VideoTrainer(**kwargs) # in fact, endo dataset still uses video trainer.
+        # in fact, endo dataset still uses video trainer.
+        return video_trainer.VideoTrainer(**kwargs)
     elif model_type == "phototourism":
         from plenoxels.runners import phototourism_trainer
         return phototourism_trainer.PhototourismTrainer(**kwargs)
@@ -122,7 +127,8 @@ def main():
     seed_everything(args.seed)
 
     # Import config
-    spec = importlib.util.spec_from_file_location(os.path.basename(args.config_path), args.config_path)
+    spec = importlib.util.spec_from_file_location(
+        os.path.basename(args.config_path), args.config_path)
     cfg = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cfg)
     config: Dict[str, Any] = cfg.config
@@ -132,7 +138,8 @@ def main():
     # note that all values are strings, so code should assume incorrect data-types for anything
     # that's derived from config - and should not a string.
     overrides: List[str] = args.override
-    overrides_dict = {ovr.split("=")[0]: ovr.split("=")[1] for ovr in overrides}
+    overrides_dict = {ovr.split("=")[0]: ovr.split("=")[
+        1] for ovr in overrides}
     config.update(overrides_dict)
     config['batch_size'] = int(config['batch_size'])
     config['num_steps'] = int(config['num_steps'])
@@ -149,11 +156,14 @@ def main():
     render_only = args.render_only
     spacetime_only = args.spacetime_only
     if validate_only and render_only:
-        raise ValueError("render_only and validate_only are mutually exclusive.")
+        raise ValueError(
+            "render_only and validate_only are mutually exclusive.")
     if render_only and spacetime_only:
-        raise ValueError("render_only and spacetime_only are mutually exclusive.")
+        raise ValueError(
+            "render_only and spacetime_only are mutually exclusive.")
     if validate_only and spacetime_only:
-        raise ValueError("validate_only and spacetime_only are mutually exclusive.")
+        raise ValueError(
+            "validate_only and spacetime_only are mutually exclusive.")
 
     assert not('mask' in config and 'maskIS' in config)
 
@@ -166,13 +176,15 @@ def main():
     else:
         save_config(config)
 
-    data = load_data(model_type, validate_only=validate_only, render_only=render_only or spacetime_only, **config)
+    data = load_data(model_type, validate_only=validate_only,
+                     render_only=render_only or spacetime_only, **config)
     config.update(data)
     trainer = init_trainer(model_type, **config)
     if args.log_dir is not None:
         checkpoint_path = os.path.join(args.log_dir, "model.pth")
         training_needed = not (validate_only or render_only or spacetime_only)
-        trainer.load_model(torch.load(checkpoint_path), training_needed=training_needed)
+        trainer.load_model(torch.load(checkpoint_path),
+                           training_needed=training_needed)
 
     if validate_only:
         # if config['endo'] == True:
