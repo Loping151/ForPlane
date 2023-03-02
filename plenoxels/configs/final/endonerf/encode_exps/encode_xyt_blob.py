@@ -5,7 +5,7 @@ config = {
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'encode_xyzt',
+    'expname': 'encode_xyt_blob',
     'logdir': './logs/encode_exps',
     'device': 'cuda:0',
 
@@ -81,7 +81,9 @@ config = {
             'resolution': [64, 64, 64, 156]
         },
         {
-            'encode_items': 'xyzt'
+            'encoder_type': 'OneBlob',
+            'encode_items': 'xyt',
+            'n_bins': 4
         }
     ],
 }

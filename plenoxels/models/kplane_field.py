@@ -55,6 +55,7 @@ def interpolate_ms_features(pts: torch.Tensor,
                             grid_dimensions: int,
                             concat_features: bool,
                             num_levels: Optional[int],
+                            mode: str = 'bilinear',
                             ) -> torch.Tensor:
     coo_combs = list(itertools.combinations(
         range(pts.shape[-1]), grid_dimensions)
@@ -70,7 +71,7 @@ def interpolate_ms_features(pts: torch.Tensor,
             # shape of grid[ci]: 1, out_dim, *reso
             feature_dim = grid[ci].shape[1]
             interp_out_plane = (
-                grid_sample_wrapper(grid[ci], pts[..., coo_comb])
+                grid_sample_wrapper(grid[ci], pts[..., coo_comb], mode=mode)
                 .view(-1, feature_dim)
             )
             # compute product over planes
@@ -157,20 +158,48 @@ class KPlaneField(nn.Module):
         # get encode info to determine what to encode
         self.encode_info = {}
         self.pt_encoded_dim = 0
+        encode_length = 0
         if len(self.grid_config) > 1:
-            assert self.encode_info.get('encode_items', None) in [
-                None, 'xyzt', 'xyz', 'xyt', 'xyz']
             self.encode_info = self.grid_config[1].copy()
-        if self.encode_info.get('encode_items', None) is not None:
-            self.pt_encoder = tcnn.Encoding(
-                n_input_dims=len(self.encode_info.get('encode_items')),
-                encoding_config={
-                    "otype": "Frequency",
-                    "n_frequencies": self.encode_info.get('n_frequencies', 12),
-                },
-            )
-            self.pt_encoded_dim = len(self.encode_info.get(
-                'encode_items')) * 2 * self.encode_info.get('n_frequencies', 12)
+            assert self.encode_info.get('encode_items', None) in [
+                'sigma_out', 'xyzt', 'xyz', 'xyt', 'xyz', 'xy', None]
+            assert self.encode_info.get('encoder_type', None) in [
+                'Frequency', 'OneBlob', None]
+            try:
+                encode_length = len(self.encode_info.get(
+                    'encode_items'))
+            except TypeError:
+                pass
+            if self.encode_info.get('sample_res', None) is True:
+                self.pt_encoded_dim += self.feature_dim
+            try:
+                if 'sigma_out' in self.encode_info.get('encode_items'):
+                    encode_length = 15
+            except TypeError:
+                pass
+            if self.encode_info.get('encoder_type') == 'Frequency':
+                self.pt_encoder = tcnn.Encoding(
+                    n_input_dims=encode_length,
+                    encoding_config={
+                        "otype": "Frequency",
+                        "n_frequencies": self.encode_info.get('n_frequencies', 2)
+                    },
+                )
+                self.pt_encoded_dim += encode_length * 2 * \
+                    self.encode_info.get('n_frequencies', 2)
+            elif self.encode_info.get('encoder_type') == 'OneBlob':
+                self.pt_encoder = tcnn.Encoding(
+                    n_input_dims=encode_length,
+                    encoding_config={
+                        "otype": "OneBlob",
+                        "n_bins": self.encode_info.get('n_bins', 4)
+                    },
+                )
+                self.pt_encoded_dim += encode_length * \
+                    self.encode_info.get('n_bins', 4)
+            else:
+                self.pt_encoder = nn.Identity()
+                self.pt_encoded_dim += encode_length
         if not self.disable_view_dir:
             self.direction_encoder = tcnn.Encoding(
                 n_input_dims=3,
@@ -265,7 +294,8 @@ class KPlaneField(nn.Module):
         features = interpolate_ms_features(
             pts, ms_grids=self.grids,  # noqa
             grid_dimensions=self.grid_config[0]["grid_dimensions"],
-            concat_features=self.concat_features, num_levels=None)
+            concat_features=self.concat_features, num_levels=None,
+            mode=self.grid_config[0].get('mode', 'bilinear'))
         if len(features) < 1:
             features = torch.zeros((0, 1)).to(features.device)
         if self.linear_decoder:
@@ -299,21 +329,28 @@ class KPlaneField(nn.Module):
             if not self.disable_view_dir:  # only valid in the case of not linear decoder
                 directions = get_normalized_directions(directions)
                 encoded_directions = self.direction_encoder(directions)
-                color_features = [encoded_directions,
-                                  features.view(-1, self.geo_feat_dim)]
-            elif self.encode_info.get('encode_items', None) is not None:
+                color_features = [features, encoded_directions.detach()]
+            else:  # no view direction embedding
+                color_features = [features]
+            if self.encode_info.get('encode_items', None) is not None:
                 xyz = {'x': 0, 'y': 1, 'z': 2}
-                if 't' in self.encode_info.get('encode_items'):
-                    encoded_items = torch.cat((pts.reshape(-1, pts.shape[-1])[:, [
-                                              xyz[i] for i in self.encode_info.get('encode_items') if i != 't']], torch.repeat_interleave(timestamps, repeats=pts.shape[1]).reshape(-1, 1)), dim=1)
+                if self.encode_info.get('encode_items') == 'sigma_out':
+                    encoded_items = features
+                elif 't' in self.encode_info.get('encode_items'):
+                    encoded_items = torch.cat((pts.reshape(-1, pts.shape[-1])[:, [xyz[i] for i in self.encode_info.get(
+                        'encode_items') if i != 't']], torch.repeat_interleave(timestamps, repeats=pts.shape[1]).reshape(-1, 1)), dim=1)
                 else:
                     encoded_items = pts.reshape(-1, pts.shape[-1])[:, [
                         xyz[i] for i in self.encode_info.get('encode_items') if i != 't']]
                 encoded_pt = self.pt_encoder(encoded_items)
-                color_features = [encoded_pt,
-                                  features.view(-1, self.geo_feat_dim)]
-            else:  # no view direction embedding
-                color_features = [features]
+                color_features.append(encoded_pt.detach())
+            if self.encode_info.get('sample_res'):
+                sample_feature = interpolate_ms_features(
+                    pts.reshape(-1, pts.shape[-1]), ms_grids=self.grids,  # noqa
+                    grid_dimensions=self.grid_config[0]["grid_dimensions"],
+                    concat_features=self.concat_features, num_levels=None,
+                    mode=self.grid_config[0].get('mode', 'bilinear'))
+                color_features.append(sample_feature)
         else:  # linear decoder
             color_features = [features]
 

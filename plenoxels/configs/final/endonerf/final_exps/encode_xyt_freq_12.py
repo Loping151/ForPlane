@@ -1,12 +1,13 @@
 config = {
+    'description': 'encode xyt with 12 dim',
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'encode_xyt',
-    'logdir': './logs/encode_exps',
+    'expname': 'encode_xyt_freq_12',
+    'logdir': './logs/finals',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -16,7 +17,7 @@ config = {
     'ndc_far': 2.0,
     'isg': True,
     'isg_step': 1,
-    'ist_step': 500,
+    'ist_step': 375,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -25,7 +26,7 @@ config = {
     'near_scaling': 0.95,
 
     # Optimization settings
-    'num_steps': 2000,
+    'num_steps': 1500,
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -44,11 +45,11 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 1000,
+    'step_iter': 750,
 
     # Training settings
-    'valid_every': 2000,
-    'save_every': 2000,
+    'valid_every': 1500,
+    'save_every': 1500,
     'save_outputs': True,
     'train_fp16': True,
 
@@ -81,7 +82,9 @@ config = {
             'resolution': [64, 64, 64, 156]
         },
         {
-            'encode_items': 'xyt'
+            'encoder_type': 'Frequency',
+            'encode_items': 'xyt',
+            'n_frequencies': 2
         }
     ],
 }

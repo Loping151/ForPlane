@@ -1,12 +1,13 @@
 config = {
+    'description': 'Base case with isg and ist sample', 
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'encode_xy',
-    'logdir': './logs/encode_exps',
+    'expname': 'current2000',
+    'logdir': './logs/finals',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -72,16 +73,11 @@ config = {
     'density_activation': 'trunc_exp',
     'linear_decoder': False,
     'multiscale_res': [1, 2, 4, 8],
-    'grid_config': [
-        {
-            'grid_dimensions': 2,
-            'input_coordinate_dim': 4,
-            'output_coordinate_dim': 16,
-            'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 156]
-        },
-        {
-            'encode_items': 'xy'
-        }
-    ],
+    'grid_config': [{
+        'grid_dimensions': 2,
+        'input_coordinate_dim': 4,
+        'output_coordinate_dim': 16,
+        'disable_view_encoder': True,
+        'resolution': [64, 64, 64, 156]
+    }],
 }

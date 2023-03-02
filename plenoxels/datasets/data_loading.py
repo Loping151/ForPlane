@@ -189,14 +189,14 @@ def parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwa
 
 
 def parallel_load_endo_mask(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 10
+    max_threads = 8
     fn = _parallel_loader_endo_mask_image
     outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
 
 def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 10
+    max_threads = 8
     fn = _parallel_loader_endo_depth_image
     outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs

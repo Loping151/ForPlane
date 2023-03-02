@@ -84,7 +84,8 @@ class BaseTrainer(abc.ABC):
             # Regularization
             loss = recon_loss
             for r in self.regularizers:
-                reg_loss = r.regularize(self.model, model_out=fwd_out, data=data)
+                reg_loss = r.regularize(
+                    self.model, model_out=fwd_out, data=data)
                 loss = loss + reg_loss
             self.timer.check("regularizaion-forward")
         # Update weights
@@ -101,7 +102,8 @@ class BaseTrainer(abc.ABC):
             with torch.no_grad():
                 recon_loss_val = recon_loss.item()
                 self.loss_info[f"mse"].update(recon_loss_val)
-                self.loss_info[f"psnr"].update(-10 * math.log10(recon_loss_val))
+                self.loss_info[f"psnr"].update(-10 *
+                                               math.log10(recon_loss_val))
                 for r in self.regularizers:
                     r.report(self.loss_info)
 
@@ -113,7 +115,8 @@ class BaseTrainer(abc.ABC):
             progress_bar.set_postfix_str(
                 losses_to_postfix(self.loss_info, lr=self.lr), refresh=False)
             for loss_name, loss_val in self.loss_info.items():
-                self.writer.add_scalar(f"train/loss/{loss_name}", loss_val.value, self.global_step)
+                self.writer.add_scalar(
+                    f"train/loss/{loss_name}", loss_val.value, self.global_step)
                 if self.timer.enabled:
                     tsum = 0.
                     tstr = "Timings: "
@@ -227,8 +230,8 @@ class BaseTrainer(abc.ABC):
                          dset,
                          img_idx: int,
                          name: Optional[str] = None,
-                         save_outputs: bool = True, 
-                         out_pred = False) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
+                         save_outputs: bool = True,
+                         out_pred=False) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
         if isinstance(dset.img_h, int):
             img_h, img_w = dset.img_h, dset.img_w
         else:
@@ -255,7 +258,8 @@ class BaseTrainer(abc.ABC):
         for k in preds.keys():
             if "depth" in k:
                 prop_depth = preds[k].cpu().reshape(img_h, img_w)[..., None]
-                out_depth = torch.cat((out_depth, prop_depth), dim=1) if out_depth is not None else prop_depth # horizontal concat
+                out_depth = torch.cat(
+                    (out_depth, prop_depth), dim=1) if out_depth is not None else prop_depth  # horizontal concat
 
         if gt is not None:
             gt = gt.reshape(img_h, img_w, -1).cpu()
@@ -264,9 +268,10 @@ class BaseTrainer(abc.ABC):
             summary.update(self.calc_metrics(preds_rgb, gt))
             # out_img = torch.cat((out_img, gt), dim=0)
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
-            ### we want to save the images in a row not in a column
-            out_img = torch.cat((out_img, gt), dim=1) 
-            out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=1) # pred, gt, error map
+            # we want to save the images in a row not in a column
+            out_img = torch.cat((out_img, gt), dim=1)
+            out_img = torch.cat((out_img, self._normalize_err(
+                preds_rgb, gt)), dim=1)  # pred, gt, error map
 
         out_img_np: np.ndarray = (out_img * 255.0).byte().numpy()
         out_depth_np: Optional[np.ndarray] = None
@@ -281,7 +286,8 @@ class BaseTrainer(abc.ABC):
             write_png(os.path.join(self.log_dir, out_name + ".png"), out_img_np)
             if out_depth is not None:
                 depth_name = out_name + "-depth"
-                write_png(os.path.join(self.log_dir, depth_name + ".png"), out_depth_np)
+                write_png(os.path.join(self.log_dir,
+                          depth_name + ".png"), out_depth_np)
         if out_pred:
             return summary, out_img_np, out_depth_np, preds_rgb
         return summary, out_img_np, out_depth_np
@@ -297,9 +303,11 @@ class BaseTrainer(abc.ABC):
         scene_metrics_agg: Dict[str, float] = {}
         for k in scene_metrics:
             ak = f"{k}_{extra_name}"
-            scene_metrics_agg[ak] = np.mean(np.asarray(scene_metrics[k])).item()
+            scene_metrics_agg[ak] = np.mean(
+                np.asarray(scene_metrics[k])).item()
             log_text += f" | {k}: {scene_metrics_agg[ak]:.4f}"
-            self.writer.add_scalar(f"test/{ak}", scene_metrics_agg[ak], self.global_step)
+            self.writer.add_scalar(
+                f"test/{ak}", scene_metrics_agg[ak], self.global_step)
 
         log.info(log_text)
         return scene_metrics_agg
@@ -377,7 +385,8 @@ class BaseTrainer(abc.ABC):
     def init_optim(self, **kwargs) -> torch.optim.Optimizer:
         optim_type = kwargs['optim_type']
         if optim_type == 'adam':
-            optim = torch.optim.Adam(params=self.model.get_params(kwargs['lr']), eps=1e-15)
+            optim = torch.optim.Adam(
+                params=self.model.get_params(kwargs['lr']), eps=1e-15)
         else:
             raise NotImplementedError()
         return optim
@@ -391,7 +400,8 @@ class BaseTrainer(abc.ABC):
 
     def init_regularizers(self, **kwargs):
         # Keep only the regularizers with a positive weight
-        regularizers = [r for r in self.get_regularizers(**kwargs) if r.weight > 0]
+        regularizers = [r for r in self.get_regularizers(
+            **kwargs) if r.weight > 0]
         return regularizers
 
     @property
@@ -411,7 +421,8 @@ def losses_to_postfix(loss_dict: Dict[str, EMA], lr: Optional[float]) -> str:
 
 
 def init_dloader_random(_):
-    seed = torch.initial_seed() % 2**32  # worker-specific seed initialized by pytorch
+    # worker-specific seed initialized by pytorch
+    seed = torch.initial_seed() % 2**32
     np.random.seed(seed)
     random.seed(seed)
 

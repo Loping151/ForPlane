@@ -4,23 +4,29 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Choose dataset name.')
 parser.add_argument('--index', type=int, help='from 0 to 5', default=0)
+parser.add_argument('--dataname', type=str, help='data name', default='')
+parser.add_argument('--path', type=str, help='path dir', default='')
 
 args = parser.parse_args()
 
 filename = "endo_log.txt"
 datalist = ['cutting', 'pulling', 'pushing', 'tearing', 'thin', 'traction']
 
-if args.index is not None and args.index < len(datalist):
-    dataname = datalist[args.index]
+if len(args.dataname) > 0:
+    dataname = args.dataname
+# elif args.index is not None and args.index < len(datalist):
+#     dataname = datalist[args.index]
+# else:
+#     print('Invalid index')
+#     exit()
+
+if args.path == '':
+    if os.path.exists('logs'):
+        directory = "logs"
+    elif os.path.exists('../logs'):
+        directory = "../logs"
 else:
-    print('Invalid index')
-    exit()
-
-if os.path.exists('logs'):
-    directory = "logs"
-elif os.path.exists('../logs'):
-    directory = "../logs"
-
+    directory = args.path
 
 file_list = []
 for root, dirs, files in os.walk(directory):
@@ -31,15 +37,17 @@ for root, dirs, files in os.walk(directory):
 if not os.path.exists(os.path.join(directory, 'performance')):
     os.mkdir(os.path.join(directory, 'performance'))
 
-with open(os.path.join(directory, 'performance','all_results.csv'), mode='w', newline='') as file:
+with open(os.path.join(directory, 'performance', 'all_results.csv'), mode='w', newline='') as file:
     writer = csv.writer(file)
+    writer.writerow(['path:'+directory])
     writer.writerow(['dataset:'+dataname])
-    writer.writerow(['expname', 'isg', 'freq_ratio', 'ist_step', 'PSNR', 'SSIM', 'LPIPS'])
+    writer.writerow(['expname', 'isg', 'freq_ratio',
+                    'ist_step', 'PSNR', 'SSIM', 'LPIPS'])
     for file_path in file_list:
         if dataname not in file_path:
             continue
         with open(os.path.join(os.path.dirname(file_path), 'config.csv'), 'r') as config, open(file_path, 'r') as endolog:
-            config = csv.reader(config, delimiter = '\t')
+            config = csv.reader(config, delimiter='\t')
             config = {rows[0]: rows[1] for rows in config}
             ratio = config.get('frequency_ratio')
             isg = config.get('isg')
@@ -49,4 +57,5 @@ with open(os.path.join(directory, 'performance','all_results.csv'), mode='w', ne
                 key, value = line.strip().split(':')
                 mertric.append(value)
 
-            writer.writerow([os.path.basename(os.path.dirname(file_path)), isg, ratio, ist_step, *mertric])
+            writer.writerow([os.path.basename(os.path.dirname(
+                file_path)), isg, ratio, ist_step, *mertric])
