@@ -12,3 +12,4 @@ PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/en
 PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endonerf/final_exps/encode_xyt_freq_12.py
 PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endonerf/final_exps/encode_xyzt_freq_8.py
 PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endonerf/final_exps/encode_xyzt_freq_16.py
+PYTHONPATH='.' python plenoxels/main.py --config-path plenoxels/configs/final/endonerf/final_exps/no_isg.py

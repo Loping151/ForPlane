@@ -1,5 +1,5 @@
 config = {
-    'description': 'See how 1500 steps perform', 
+    'description': 'No isg',
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
@@ -16,8 +16,8 @@ config = {
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': 1,
-    'ist_step': 375,
+    'isg_step': -1,
+    'ist_step': 1,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
