@@ -6,7 +6,7 @@ config = {
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'compare_endo',
+    'expname': 'compare_endo_cutting',
     'logdir': './logs/finals',
     'device': 'cuda:0',
 

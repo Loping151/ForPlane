@@ -1,12 +1,7 @@
 config = {
-    'description': 'No isg',
-    # a case for enable depth training.
-    # from endo_hybrid_soft_depth
+    'description': 'full version 7min with xyzt blob encoding and isg-ist'
 
-    # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
-    # use isg_step, ist_step to further modify
-
-    'expname': 'no_isg',
+    'expname': 'full_',
     'logdir': './logs/finals',
     'device': 'cuda:0',
 
@@ -16,8 +11,8 @@ config = {
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': -1,
-    'ist_step': 1,
+    'isg_step': 1,
+    'ist_step': 375,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -73,11 +68,18 @@ config = {
     'density_activation': 'trunc_exp',
     'linear_decoder': False,
     'multiscale_res': [1, 2, 4, 8],
-    'grid_config': [{
-        'grid_dimensions': 2,
-        'input_coordinate_dim': 4,
-        'output_coordinate_dim': 16,
-        'disable_view_encoder': True,
-        'resolution': [64, 64, 64, 156]
-    }],
+    'grid_config': [
+        {
+            'grid_dimensions': 2,
+            'input_coordinate_dim': 4,
+            'output_coordinate_dim': 16,
+            'disable_view_encoder': True,
+            'resolution': [64, 64, 64, 156]
+        },
+        {
+            'encoder_type': 'OneBlob',
+            'encode_items': 'xyzt',
+            'n_bins': 4
+        }
+    ],
 }

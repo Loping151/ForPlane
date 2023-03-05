@@ -1,12 +1,12 @@
 config = {
-    'description': 'No isg',
+    'description': '20 step iter',  
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'no_isg',
+    'expname': 'step_iter20',
     'logdir': './logs/finals',
     'device': 'cuda:0',
 
@@ -16,8 +16,8 @@ config = {
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': -1,
-    'ist_step': 1,
+    'isg_step': 1,
+    'ist_step': 375,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -45,7 +45,7 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 750,
+    'step_iter': 300,
 
     # Training settings
     'valid_every': 1500,

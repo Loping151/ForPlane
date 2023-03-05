@@ -1,23 +1,23 @@
 config = {
-    'description': 'No isg',
+    'description': 'To compare with endo',
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'no_isg',
+    'expname': 'compare_endo_thin',
     'logdir': './logs/finals',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/thin_structures'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': -1,
-    'ist_step': 1,
+    'isg_step': 1,
+    'ist_step': 500//4,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -26,7 +26,7 @@ config = {
     'near_scaling': 0.95,
 
     # Optimization settings
-    'num_steps': 1500,
+    'num_steps': 550,
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -45,11 +45,11 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 750,
+    'step_iter': 550//2,
 
     # Training settings
-    'valid_every': 1500,
-    'save_every': 1500,
+    'valid_every': 550,
+    'save_every': 550,
     'save_outputs': True,
     'train_fp16': True,
 

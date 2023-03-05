@@ -1,12 +1,12 @@
 config = {
-    'description': 'No isg',
+    'description': 'loss try', 
     # a case for enable depth training.
     # from endo_hybrid_soft_depth
 
     # midified: isg = True to enable isg, maskIS = True to use gt_masks to mask isg and ist
     # use isg_step, ist_step to further modify
 
-    'expname': 'no_isg',
+    'expname': 'loss_trial2',
     'logdir': './logs/finals',
     'device': 'cuda:0',
 
@@ -16,8 +16,8 @@ config = {
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': -1,
-    'ist_step': 1,
+    'isg_step': 1,
+    'ist_step': 375,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -37,11 +37,11 @@ config = {
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
     'distortion_loss_weight': 0.0,
     'histogram_loss_weight': 1.0,
-    'l1_time_planes': 0.0001,
+    'l1_time_planes': 0.0003,
     'l1_time_planes_proposal_net': 0.0001,
     'plane_tv_weight': 0.0001,
     'plane_tv_weight_proposal_net': 0.0001,
-    'time_smoothness_weight': 0.01,
+    'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,

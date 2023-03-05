@@ -14,6 +14,8 @@ datalist = ['cutting', 'pulling', 'pushing', 'tearing', 'thin', 'traction']
 
 if len(args.dataname) > 0:
     dataname = args.dataname
+else:
+    dataname = ''
 # elif args.index is not None and args.index < len(datalist):
 #     dataname = datalist[args.index]
 # else:
@@ -41,21 +43,22 @@ with open(os.path.join(directory, 'performance', 'all_results.csv'), mode='w', n
     writer = csv.writer(file)
     writer.writerow(['path:'+directory])
     writer.writerow(['dataset:'+dataname])
-    writer.writerow(['expname', 'isg', 'freq_ratio',
-                    'ist_step', 'PSNR', 'SSIM', 'LPIPS'])
+    label_items = ['expname', 'num_steps', 'step_iter', 'maskIS', 'isg', 'isg_step',
+                   'ist_step', 'grid_config', 'PSNR', 'SSIM', 'LPIPS']
+    writer.writerow(label_items)
     for file_path in file_list:
         if dataname not in file_path:
             continue
         with open(os.path.join(os.path.dirname(file_path), 'config.csv'), 'r') as config, open(file_path, 'r') as endolog:
             config = csv.reader(config, delimiter='\t')
             config = {rows[0]: rows[1] for rows in config}
-            ratio = config.get('frequency_ratio')
-            isg = config.get('isg')
-            ist_step = config.get('ist_step')
+            # ratio = config.get('frequency_ratio')
+            # isg = config.get('isg')
+            # ist_step = config.get('ist_step')
             mertric = []
             for line in endolog:
                 key, value = line.strip().split(':')
                 mertric.append(value)
 
             writer.writerow([os.path.basename(os.path.dirname(
-                file_path)), isg, ratio, ist_step, *mertric])
+                file_path)), *[config.get(i) for i in label_items[1:-3]], *mertric])
