@@ -45,28 +45,30 @@ def render_to_path(trainer: Union[VideoTrainer, StaticTrainer], extra_name: str 
         pb.update(1)
     pb.close()
 
-    out_fname = os.path.join(trainer.log_dir, f"rendering_path_{extra_name}.mp4")
+    out_fname = os.path.join(
+        trainer.log_dir, f"rendering_path_{extra_name}.mp4")
     write_video_to_file(out_fname, frames)
     log.info(f"Saved rendering path with {len(frames)} frames to {out_fname}")
-
 
 
 def generate_pointclouds(rgb_np, depth_np, crop_left_size=0, depth_filter=None, vis_rgbd=False):
     # use o3d to form rgbd image and convert to point cloud
     # set render params for DaVinci endoscopic
     hwf = [512, 640, 569.46820041]
-    check_image_type = lambda img: (img * 255).astype(np.uint8) if img.dtype == np.float32 else img
+    def check_image_type(img): return (
+        img * 255).astype(np.uint8) if img.dtype == np.float32 else img
     if crop_left_size > 0:
-        rgb_np = rgb_np[:, crop_left_size:, :] # crop left side, HWC
-        depth_np = depth_np[:, crop_left_size:] # crop left side, HW
+        rgb_np = rgb_np[:, crop_left_size:, :]  # crop left side, HWC
+        depth_np = depth_np[:, crop_left_size:]  # crop left side, HW
 
     if depth_filter is not None:
-        depth_np = cv2.bilateralFilter(depth_np, depth_filter[0], depth_filter[1], depth_filter[2])
+        depth_np = cv2.bilateralFilter(
+            depth_np, depth_filter[0], depth_filter[1], depth_filter[2])
 
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
-                                o3d.geometry.Image(check_image_type(rgb_np)), 
-                                o3d.geometry.Image(depth_np), 
-                                convert_rgb_to_intensity=False)
+        o3d.geometry.Image(check_image_type(rgb_np)),
+        o3d.geometry.Image(depth_np),
+        convert_rgb_to_intensity=False)
     if vis_rgbd:
         import matplotlib.pyplot as plt
         plt.subplot(1, 2, 1)
@@ -80,9 +82,11 @@ def generate_pointclouds(rgb_np, depth_np, crop_left_size=0, depth_filter=None, 
 
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
         rgbd_image,
-        o3d.camera.PinholeCameraIntrinsic(hwf[1],hwf[0], hwf[2], hwf[2], hwf[1] / 2, hwf[0] / 2)
+        o3d.camera.PinholeCameraIntrinsic(
+            hwf[1], hwf[0], hwf[2], hwf[2], hwf[1] / 2, hwf[0] / 2)
     )
     return pcd
+
 
 @torch.no_grad()
 def render_to_path_with_pointcloud(trainer: Union[VideoTrainer, StaticTrainer], extra_name: str = "", save_pc_num: int = -1) -> None:
@@ -114,23 +118,31 @@ def render_to_path_with_pointcloud(trainer: Union[VideoTrainer, StaticTrainer], 
         )
         frames.append(preds_rgb)
         if "depth" in ts_render:
-            depths.append(ts_render["depth"].cpu().reshape(img_h, img_w)[..., None])
+            depths.append(ts_render["depth"].cpu().reshape(
+                img_h, img_w)[..., None])
+            np.save(os.path.join(trainer.log_dir, 'estm',
+                    'depth'+str(len(depths)-1)+'.npy'), depths[-1])
+        # if "accumulation" in ts_render:
+            # acc = ts_render['accumulation'].cpu().reshape(img_h, img_w)
+            # cv2.imwrite( "acc.png",(ts_render['accumulation'].cpu().reshape(img_h, img_w).numpy()*255.).astype(np.uint8))
         pb.update(1)
     pb.close()
 
-    out_fname = os.path.join(trainer.log_dir, f"rendering_path_{extra_name}.mp4")
-    write_video_to_file(out_fname, frames)
-    log.info(f"Saved rendering path with {len(frames)} frames to {out_fname}")
+    # out_fname = os.path.join(
+    #     trainer.log_dir, f"rendering_path_{extra_name}.mp4")
+    # write_video_to_file(out_fname, frames)
+    # log.info(f"Saved rendering path with {len(frames)} frames to {out_fname}")
 
-    if save_pc_num == -1:
-        save_pc_num = range(len(frames))
-    elif save_pc_num == -2:
-        return
-    else:
-        save_pc_num = [min(save_pc_num, len(frames))]
-    for idx in save_pc_num:
-        pcd = generate_pointclouds(frames[idx], depths[idx])
-        o3d.io.write_point_cloud(os.path.join(trainer.log_dir, f"pcd_{idx}.ply"), pcd)
+    # if save_pc_num == -1:
+    #     save_pc_num = range(len(frames))
+    # elif save_pc_num == -2:
+    #     return
+    # else:
+    #     save_pc_num = [min(save_pc_num, len(frames))]
+    # for idx in save_pc_num:
+    #     pcd = generate_pointclouds(frames[idx], depths[idx])
+    #     o3d.io.write_point_cloud(os.path.join(
+    #         trainer.log_dir, f"pcd_{idx}.ply"), pcd)
 
 
 def normalize_for_disp(img):
@@ -194,10 +206,12 @@ def decompose_space_time_dynerf(trainer: StaticTrainer, extra_name: str = "") ->
         # Space-only model: turn off time-planes
         for i in range(len(model.field.grids)):
             for plane_idx in [2, 4, 5]:  # time-grids off
-                model.field.grids[i][plane_idx].data = torch.ones_like(parameters[i][plane_idx])
+                model.field.grids[i][plane_idx].data = torch.ones_like(
+                    parameters[i][plane_idx])
         for i in range(len(model.proposal_networks)):
             for plane_idx in [2, 4, 5]:
-                model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(pn_parameters[i][plane_idx])
+                model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(
+                    pn_parameters[i][plane_idx])
         preds = trainer.eval_step(camdata)
         spatial_out = preds["rgb"].reshape(img_h, img_w, 3).cpu()
 
@@ -229,7 +243,7 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
         trainer: The trainer object which is used for rendering
         extra_name: String to append to the saved file-name
     """
-    chosen_cam_idx = 15 # the frame idx among dataset
+    chosen_cam_idx = 15  # the frame idx among dataset
     model: LowrankModel = trainer.model
     dataset = trainer.test_dataset
 
@@ -272,10 +286,12 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
         # Space-only model: turn off time-planes
         for i in range(len(model.field.grids)):
             for plane_idx in [2, 4, 5]:  # time-grids off
-                model.field.grids[i][plane_idx].data = torch.ones_like(parameters[i][plane_idx])
+                model.field.grids[i][plane_idx].data = torch.ones_like(
+                    parameters[i][plane_idx])
         for i in range(len(model.proposal_networks)):
             for plane_idx in [2, 4, 5]:
-                model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(pn_parameters[i][plane_idx])
+                model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(
+                    pn_parameters[i][plane_idx])
         preds = trainer.eval_step(camdata)
         spatial_out = preds["rgb"].reshape(img_h, img_w, 3).cpu()
 

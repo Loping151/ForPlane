@@ -1,18 +1,18 @@
 config = {
-    'description': 'full version 7min with xyzt blob encoding and isg-ist'
+    'description': 'full version 7min with xyzt blob encoding and isg-ist on traction dataset',
 
-    'expname': 'full_',
-    'logdir': './logs/finals',
+    'expname': 'full_2000_traction',
+    'logdir': './logs/paper',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/traction'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
     'isg_step': 1,
-    'ist_step': 375,
+    'ist_step': 200,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
@@ -21,7 +21,7 @@ config = {
     'near_scaling': 0.95,
 
     # Optimization settings
-    'num_steps': 1500,
+    'num_steps': 2000,
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -36,15 +36,15 @@ config = {
     'l1_time_planes_proposal_net': 0.0001,
     'plane_tv_weight': 0.0001,
     'plane_tv_weight_proposal_net': 0.0001,
-    'time_smoothness_weight': 0.01,
+    'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 750,
+    'step_iter': 1000,
 
     # Training settings
-    'valid_every': 1500,
-    'save_every': 1500,
+    'valid_every': 2000,
+    'save_every': 2000,
     'save_outputs': True,
     'train_fp16': True,
 
@@ -57,9 +57,9 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 156]},
+            'resolution': [128, 128, 128, 71]},
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [256, 256, 256, 156]}
+            'resolution': [256, 256, 256, 71]}
     ],
     #  'max_train_tsteps': 100000,
 
@@ -74,7 +74,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 156]
+            'resolution': [64, 64, 64, 71]
         },
         {
             'encoder_type': 'OneBlob',

@@ -65,7 +65,7 @@ class VideoEndoDataset(BaseDataset):
         self.median_imgs = None
         self.mask_weights = None
         self.p = None # p is the additional weight
-
+        self.bg_color = kwargs.get('bg_color', 1)
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
         dset_type = "llff"
@@ -393,6 +393,8 @@ class VideoEndoDataset(BaseDataset):
         if self.split == 'train' and imgs.shape[-1] == 4:
             bg_color = torch.rand((1, 3), dtype=torch.float32, device=dev)
         out['bg_color'] = bg_color
+        if self.bg_color == 0:
+            bg_color = torch.zeros((1, 3), dtype=torch.float32, device=dev)
 
         # Alpha compositing
         if imgs is not None and imgs.shape[-1] == 4:

@@ -1,5 +1,5 @@
 from plenoxels.utils.parse_args import parse_optfloat
-from plenoxels.utils.create_rendering import render_to_path, decompose_space_time
+from plenoxels.utils.create_rendering import render_to_path, decompose_space_time, render_to_path_with_pointcloud
 from plenoxels.runners import static_trainer
 from plenoxels.runners import phototourism_trainer
 from plenoxels.runners import video_trainer
@@ -28,26 +28,26 @@ def seed_everything(seed):
     # torch.backends.cudnn.benchmark = True
 
 
-# def get_freer_gpu():
-#     with tempfile.TemporaryDirectory() as tmpdir:
-#         tmp_fname = os.path.join(tmpdir, "tmp")
-#         os.system(
-#             f'nvidia-smi -q -d Memory |grep -A5 GPU|grep Free >"{tmp_fname}"')
-#         if os.path.isfile(tmp_fname):
-#             memory_available = [int(x.split()[2])
-#                                 for x in open(tmp_fname, 'r').readlines()]
-#             if len(memory_available) > 0:
-#                 return np.argmax(memory_available)
-#     # The grep doesn't work with all GPUs. If it fails we ignore it.
-#     return None
+def get_freer_gpu():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_fname = os.path.join(tmpdir, "tmp")
+        os.system(
+            f'nvidia-smi -q -d Memory |grep -A5 GPU|grep Free >"{tmp_fname}"')
+        if os.path.isfile(tmp_fname):
+            memory_available = [int(x.split()[2])
+                                for x in open(tmp_fname, 'r').readlines()]
+            if len(memory_available) > 0:
+                return np.argmax(memory_available)
+    # The grep doesn't work with all GPUs. If it fails we ignore it.
+    return None
 
 
-# gpu = get_freer_gpu()
-# if gpu is not None:
-#     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-#     print(f"CUDA_VISIBLE_DEVICES set to {gpu}")
-# else:
-#     print(f"Did not set GPU.")
+gpu = get_freer_gpu()
+if gpu is not None:
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+    print(f"CUDA_VISIBLE_DEVICES set to {gpu}")
+else:
+    print(f"Did not set GPU.")
 
 
 def setup_logging(log_level=logging.INFO):
@@ -191,11 +191,16 @@ def main():
         #     trainer.validate_endo()
         trainer.validate()
     elif render_only:
-        render_to_path(trainer, extra_name="")
+        if 'endo' in config:
+            render_to_path_with_pointcloud(trainer)
+        else:
+            render_to_path(trainer, extra_name="")
     elif spacetime_only:
         decompose_space_time(trainer, extra_name="")
     else:
         trainer.train()
+        if 'endo' in config:
+            render_to_path_with_pointcloud(trainer)
 
 
 if __name__ == "__main__":

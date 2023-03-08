@@ -85,7 +85,7 @@ class VideoTrainer(BaseTrainer):
                     rays_o_b, rays_d_b, timestamps=timestamps_d_b, bg_color=bg_color,
                     near_far=near_far)
                 for k, v in outputs.items():
-                    if "rgb" in k or "depth" in k:
+                    if "rgb" in k or "depth" in k or "accumulation":
                         preds[k].append(v.cpu())
         return {k: torch.cat(v, 0) for k, v in preds.items()}
 
@@ -187,7 +187,9 @@ class VideoTrainer(BaseTrainer):
         # mask_list = []
         img_list = []
         # indexex = []
-
+        logdir = self.log_dir
+        if not os.path.exists(os.path.join(logdir, 'estm')):
+            os.mkdir(os.path.join(logdir, 'estm'))
         for img_idx, data in tqdm(enumerate(dataset)):
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
@@ -199,6 +201,8 @@ class VideoTrainer(BaseTrainer):
             for k, v in out_metrics.items():
                 per_scene_metrics[k].append(v)
             img_list.append(out_pred.clone())
+            imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
+
         # for img_idx, data in tqdm(enumerate(dataset)):
         #     preds = self.eval_step(data)
         #     if isinstance(dataset.img_h, int):
@@ -233,9 +237,9 @@ class VideoTrainer(BaseTrainer):
             #     [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
             # )
             for i in range(len(pred_frames)):
-                for j in range(3):
-                    pred_frames[i][:, :dataset.img_w, j] =  pred_frames[i][:, :dataset.img_w, j] * flip_mask[i]
-                    pred_frames[i][:, dataset.img_w: 2*dataset.img_w, j] =  pred_frames[i][:, dataset.img_w: 2*dataset.img_w, j] * flip_mask[i]
+                pred_frames[i][:,:dataset.img_w] = (1-flip_mask[i])[:,:,np.newaxis] * pred_frames[i][:,:dataset.img_w]
+                pred_frames[i][:,dataset.img_w: 2*dataset.img_w] = (1-flip_mask[i])[:,:,np.newaxis] * pred_frames[i][:,dataset.img_w: 2*dataset.img_w]
+
             per_scene_metrics["FLIP"] = metrics.flip(
                 [f[:, :dataset.img_w, :] for f in pred_frames],
                 [f[:, dataset.img_w: 2*dataset.img_w, :] for f in pred_frames],
@@ -248,16 +252,15 @@ class VideoTrainer(BaseTrainer):
         df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
         # here we save all metrics to a csv file for further analysis
         save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv")) 
-            # if not os.path.exists(os.path.join(logdir, 'estm')):
-            #     os.mkdir(os.path.join(logdir, 'estm'))
+
             # if not os.path.exists(os.path.join(logdir, 'gt_img')):
             #     os.mkdir(os.path.join(logdir, 'gt_img'))
             # if not os.path.exists(os.path.join(logdir, 'gt_mask')):
             #     os.mkdir(os.path.join(logdir, 'gt_mask'))
             # if debug:
-            # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), preds_rgb)
-            #     imageio.imwrite(os.path.join(logdir, 'gt_img', str(img_idx)+'.png'), gt_all[img_idx])
-            #     imageio.imwrite(os.path.join(logdir, 'gt_mask', str(img_idx)+'.png'), mask_all[img_idx])
+        
+                # imageio.imwrite(os.path.join(logdir, 'gt_img', str(img_idx)+'.png'), gt_all[img_idx])
+                # imageio.imwrite(os.path.join(logdir, 'gt_mask', str(img_idx)+'.png'), mask_all[img_idx])
             # indexex.append(img_idx)
             # gt_list.append(gt_all[img_idx])
             # mask_list.append(mask_all[img_idx])
@@ -343,6 +346,7 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
         sample_from_masks = kwargs.get('sample_from_masks', False),
         p_ratio = kwargs.get('p_ratio', 1),
         frequency_ratio = kwargs.get('frequency_ratio', None),
+        bg_color = kwargs.get('bg_color', 1),
     )
     else:
         log.info(f"Loading Video360Dataset with downsample={data_downsample}")
@@ -382,6 +386,7 @@ def init_ts_data(data_dir, split, **kwargs):
             sample_from_masks = kwargs.get('sample_from_masks', False),
             p_ratio = kwargs.get('p_ratio', 1),
             frequency_ratio = kwargs.get('frequency_ratio', None),
+            bg_color = kwargs.get('bg_color', 1),
         )
     else:
         ts_dset = Video360Dataset(
