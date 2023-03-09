@@ -1,6 +1,7 @@
 import os
 import csv
 import argparse
+import glob
 
 parser = argparse.ArgumentParser(description='Choose dataset name.')
 parser.add_argument('--index', type=int, help='from 0 to 5', default=0)
@@ -44,12 +45,12 @@ with open(os.path.join(directory, 'performance', 'all_results.csv'), mode='w', n
     writer.writerow(['path:'+directory])
     writer.writerow(['dataset:'+dataname])
     label_items = ['expname', 'num_steps', 'step_iter', 'maskIS', 'isg', 'isg_step',
-                   'ist_step', 'grid_config', 'PSNR', 'SSIM', 'LPIPS']
+                   'ist_step', 'grid_config', 'description', 'PSNR', 'SSIM', 'LPIPS', 'FLIP']
     writer.writerow(label_items)
     for file_path in file_list:
         if dataname not in file_path:
             continue
-        with open(os.path.join(os.path.dirname(file_path), 'config.csv'), 'r') as config, open(file_path, 'r') as endolog:
+        with open(os.path.join(os.path.dirname(file_path), 'config.csv'), 'r') as config, open(file_path, 'r') as endolog, open(glob.glob(os.path.join(os.path.dirname(file_path), 'test*.csv'))[0]) as FLIPS:
             config = csv.reader(config, delimiter='\t')
             config = {rows[0]: rows[1] for rows in config}
             # ratio = config.get('frequency_ratio')
@@ -59,6 +60,11 @@ with open(os.path.join(directory, 'performance', 'all_results.csv'), mode='w', n
             for line in endolog:
                 key, value = line.strip().split(':')
                 mertric.append(value)
+            flip = 0
+            csvreader = csv.reader(FLIPS, delimiter=',')
+            next(csvreader)  # 跳过第一行
+            second_row = next(csvreader)  # 获取第二行
+            flips = float(second_row[-1])  # 获取最后一个浮点数
 
             writer.writerow([os.path.basename(os.path.dirname(
-                file_path)), *[config.get(i) for i in label_items[1:-3]], *mertric])
+                file_path)), *[config.get(i) for i in label_items[1:-4]], *mertric, flips])

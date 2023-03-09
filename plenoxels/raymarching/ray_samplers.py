@@ -477,7 +477,7 @@ class ProposalNetworkSampler(Sampler):
         updated = self._steps_since_update > self.update_sched(self._step) or self._step < 10
         for i_level in range(n + 1): # +1 for the final nerf samples
             is_prop = i_level < n
-            num_samples = self.num_proposal_samples_per_ray[i_level] if is_prop else self.num_nerf_samples_per_ray
+            num_samples = self.num_proposal_samples_per_ray[i_level] if is_prop else self.num_nerf_samples_per_ray # 256, 
             if i_level == 0:
                 # Uniform sampling because we need to start with some samples
                 ray_samples = self.initial_sampler(ray_bundle, num_samples=num_samples)
