@@ -40,11 +40,11 @@ for root, dirs, files in os.walk(directory):
 if not os.path.exists(os.path.join(directory, 'performance')):
     os.mkdir(os.path.join(directory, 'performance'))
 
-with open(os.path.join(directory, 'performance', 'all_results.csv'), mode='w', newline='') as file:
+with open(os.path.join(directory, 'performance', '2000all_results.csv'), mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['path:'+directory])
     writer.writerow(['dataset:'+dataname])
-    label_items = ['expname', 'num_steps', 'step_iter', 'maskIS', 'isg', 'isg_step',
+    label_items = ['expname', 'num_steps', 'step_iter', 'maskIS', 'isg', 'isg_step', 'bg_color', 
                    'ist_step', 'grid_config', 'description', 'PSNR', 'SSIM', 'LPIPS', 'FLIP']
     writer.writerow(label_items)
     for file_path in file_list:

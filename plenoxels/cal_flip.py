@@ -40,7 +40,7 @@ if not os.path.exists(os.path.join(directory, 'performance')):
     os.mkdir(os.path.join(directory, 'performance'))
 flag = 1
 
-with open(os.path.join(directory, 'performance', 'flip.csv'), mode='w', newline='') as file:
+with open(os.path.join(directory, 'performance', '2000flip.csv'), mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['path:'+directory])
     label_items = ['expname', 'FLIP']
@@ -48,7 +48,7 @@ with open(os.path.join(directory, 'performance', 'flip.csv'), mode='w', newline=
     for file_path in file_list:
     #    file_path = "logs/paper/full_5000_pulling/endo_log.txt"
        dirname = os.path.dirname(file_path) 
-    #    if 'enable' not in dirname:
+    #    if '2000' not in dirname:
     #        continue
        gt_all = []
        masks = []
