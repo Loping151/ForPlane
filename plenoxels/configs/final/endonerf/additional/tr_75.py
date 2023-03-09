@@ -1,38 +1,27 @@
 config = {
-    'description': 'naive mask without importance sampling',
+    'description': 'full version 7min with xyzt blob encoding and isg-ist on traction dataset',
 
-    'expname': 'naive_mask_th',
-    'logdir': './logs/paper',
+    'expname': 'tr_75',
+    'logdir': './logs/additional',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/thin_structures'],
+    'data_dirs': ['data/endonerf_full_datasets/traction'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
-    'isg': False, # will also disable ist
+    'isg': True,
     'isg_step': 1,
-<<<<<<< HEAD
     'ist_step': 200,
-=======
-    'ist_step': 150,
->>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
-    'sample_from_masks': True,
-    'p_ratio': 0,
+    'maskIS': True,
+    'frequency_ratio': 1,
     'near_scaling': 0.95,
-<<<<<<< HEAD
-    'bg_color': 0,
 
     # Optimization settings
     'num_steps': 2000,
-=======
-
-    # Optimization settings
-    'num_steps': 1500,
->>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -51,19 +40,11 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-<<<<<<< HEAD
-    'step_iter': 1000,
+    'step_iter': 1500,
 
     # Training settings
     'valid_every': 2000,
     'save_every': 2000,
-=======
-    'step_iter': 750,
-
-    # Training settings
-    'valid_every': 1500,
-    'save_every': 1500,
->>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'save_outputs': True,
     'train_fp16': True,
 
@@ -76,9 +57,9 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 121]},
+            'resolution': [128, 128, 128, 71]},
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [256, 256, 256, 121]}
+            'resolution': [256, 256, 256, 71]}
     ],
     #  'max_train_tsteps': 100000,
 
@@ -93,7 +74,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 121]
+            'resolution': [64, 64, 64, 71]
         },
         {
             'encoder_type': 'OneBlob',

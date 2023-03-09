@@ -19,7 +19,10 @@ config = {
     'maskIS': True,
     'frequency_ratio': 1,
     'near_scaling': 0.95,
+<<<<<<< HEAD
     'bg_color': 0,
+=======
+>>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
 
     # Optimization settings
     'num_steps': 2000,

@@ -12,17 +12,27 @@ config = {
     'ndc_far': 2.0,
     'isg': True,
     'isg_step': 1,
+<<<<<<< HEAD
     'ist_step': 200,
+=======
+    'ist_step': 150,
+>>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'endo': True,
     'maskIS': True,
     'frequency_ratio': 1,
     'near_scaling': 0.95,
+<<<<<<< HEAD
     'bg_color': 0,
 
     # Optimization settings
     'num_steps': 2000,
+=======
+
+    # Optimization settings
+    'num_steps': 1500,
+>>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -44,8 +54,13 @@ config = {
     'step_iter': 1000000,
 
     # Training settings
+<<<<<<< HEAD
     'valid_every': 2000,
     'save_every': 2000,
+=======
+    'valid_every': 1500,
+    'save_every': 1500,
+>>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
     'save_outputs': True,
     'train_fp16': True,
 
