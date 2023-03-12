@@ -14,7 +14,7 @@ from typing import List, Dict, Any
 import tempfile
 import numpy as np
 import imageio.v2 as imageio
-from plenoxels.ops.image import metrics
+from lerplanes.ops.image import metrics
 import lpips
 
 @staticmethod
