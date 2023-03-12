@@ -10,6 +10,9 @@ from math import exp
 import random, time
 import imageio
 import lpips
+import warnings
+# just used for ignore annoying warming.
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 '''
