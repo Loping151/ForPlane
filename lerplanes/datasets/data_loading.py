@@ -189,14 +189,14 @@ def parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwa
 
 
 def parallel_load_endo_mask(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 2
+    max_threads = 1 # some bug cause stopping 
     fn = _parallel_loader_endo_mask_image
     outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
 
 def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 2
+    max_threads = 1
     fn = _parallel_loader_endo_depth_image
     outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
@@ -206,7 +206,7 @@ def parallel_load_images(tqdm_title,
                          dset_type: str,
                          num_images: int,
                          **kwargs) -> List[Any]:
-    max_threads = 2
+    max_threads = 1
     if dset_type == 'llff':
         fn = _parallel_loader_llff_image
     elif dset_type == 'synthetic':
@@ -216,7 +216,7 @@ def parallel_load_images(tqdm_title,
     elif dset_type == 'video':
         fn = _parallel_loader_video
         # giac: Can increase to e.g. 10 if loading 4x subsampled images. Otherwise OOM.
-        max_threads = 2
+        max_threads = 1
     else:
         raise ValueError(dset_type)
     outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
