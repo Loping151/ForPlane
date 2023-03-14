@@ -116,6 +116,7 @@ def main():
     p.add_argument('--render-only', action='store_true')
     p.add_argument('--validate-only', action='store_true')
     p.add_argument('--spacetime-only', action='store_true')
+    p.add_argument('--save-train-time-step', action='store_true')
     p.add_argument('--config-path', type=str, required=True)
     p.add_argument('--log-dir', type=str, default=None)
     p.add_argument('--seed', type=int, default=0)
@@ -200,6 +201,8 @@ def main():
             render_to_path(trainer, extra_name="")
     elif spacetime_only:
         decompose_space_time(trainer, extra_name="")
+    elif args.save_train_time_step:
+        trainer.train_with_time_step_saving(trainer) 
     else:
         trainer.train()
         if 'endo' in config:
