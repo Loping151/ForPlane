@@ -1,0 +1,18 @@
+.vscode
+data
+logs
+*.pyc
+*.png
+*.jpg
+*.zip
+*.rar
+*.tar
+*.ipynb_checkpoints
+scripts
+# Ignore all files in the scripts directory
+scripts/*
+
+# for ignore pyc
+__pycache__/
+
+*.csv
