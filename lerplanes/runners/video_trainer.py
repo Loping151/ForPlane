@@ -101,6 +101,49 @@ class VideoTrainer(BaseTrainer):
 
         return scale_ok
 
+    def train_with_time_step_saving(self):
+        """used for render per second images"""
+        if self.global_step is None:
+            self.global_step = 0
+        log.info(f"Starting training from step {self.global_step + 1}")
+        pb = tqdm(initial=self.global_step, total=self.num_steps)
+        try:
+            self.pre_epoch()
+            batch_iter = iter(self.train_data_loader)
+            while self.global_step < self.num_steps:
+                self.timer.reset()
+                self.model.step_before_iter(self.global_step)
+                self.global_step += 1
+                self.timer.check("step-before-iter")
+                try:
+                    data = next(batch_iter)
+                    self.timer.check("dloader-next")
+                except StopIteration:
+                    self.pre_epoch()
+                    batch_iter = iter(self.train_data_loader)
+                    data = next(batch_iter)
+                    log.info("Reset data-iterator")
+
+                try:
+                    step_successful = self.train_step(data)
+                except StopIteration:
+                    self.pre_epoch()
+                    batch_iter = iter(self.train_data_loader)
+                    log.info("Reset data-iterator")
+                    step_successful = True
+
+                if step_successful and self.scheduler is not None:
+                    self.scheduler.step()
+                for r in self.regularizers:
+                    r.step(self.global_step)
+                self.post_step(progress_bar=pb)
+                self.timer.check("after-step")
+        finally:
+            self.save_model()
+            pb.close()
+            self.writer.close()
+
+
     def post_step(self, progress_bar):
         super().post_step(progress_bar)
 
@@ -424,3 +467,5 @@ def save_all_metrics(per_scene_metrics, data_path):
 
     df = pd.DataFrame.from_dict(per_scene_metrics)
     df.to_csv(data_path, index=True)
+
+
