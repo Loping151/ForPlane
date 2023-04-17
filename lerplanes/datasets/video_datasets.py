@@ -69,6 +69,7 @@ class VideoEndoDataset(BaseDataset):
         self.bg_color = kwargs.get('bg_color', 1)
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
+<<<<<<< HEAD
         dset_type = "llff"
 
         # Note: timestamps are stored normalized between -1, 1.
@@ -204,6 +205,101 @@ class VideoEndoDataset(BaseDataset):
             raise ValueError(datadir)
 
         self.timestamps = timestamps
+=======
+        
+        intrinsics = load_endo_pose_helper(
+            datadir, self.downsample, self.near_scaling)
+
+        if split == 'test':
+            keyframes = False
+
+        # load images
+        paths_img, paths_mask, paths_depth = [], [], []
+        png_cnt = 0
+        str_cnt = '/000000.png'
+
+        while os.path.exists(datadir + "/images" + str_cnt):
+            paths_img.append(datadir + "/images" + str_cnt)
+            paths_mask.append(datadir + "/gt_masks" + str_cnt)
+            paths_depth.append(datadir + "/depth" + str_cnt)
+            png_cnt += 1
+            str_cnt = '/' + '0' * \
+                (6-len(str(png_cnt))) + str(png_cnt) + '.png'
+
+        assert len(paths_img) == len(paths_mask) == len(
+            paths_depth), "The lists must have the same length."
+
+        imgs = parallel_load_images(
+            data_dir=datadir,
+            dset_type='llff',
+            tqdm_title=f"Loading {split} data",
+            num_images=len(paths_img),  # Need to be modifieds
+            paths=paths_img,
+            out_h=intrinsics.height,
+            out_w=intrinsics.width,
+        )
+
+        # for endonerf dataset, we need load mask and depth
+        masks = parallel_load_endo_mask(
+            data_dir=datadir,
+            tqdm_title=f"Loading {split} data",
+            num_images=len(paths_mask),  # Need to be modifieds
+            paths=paths_mask,
+            out_h=intrinsics.height,
+            out_w=intrinsics.width,
+        )
+        depths = parallel_load_endo_depth(
+            data_dir=datadir,
+            tqdm_title=f"Loading {split} data",
+            num_images=len(paths_depth),  # Need to be modifieds
+            paths=paths_depth,
+            out_h=intrinsics.height,
+            out_w=intrinsics.width,
+        )
+
+        timestamps = torch.linspace(0, 299, len(paths_img))
+
+        imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [
+            imgs, masks, depths]]
+        # we use near and far to normalize depth
+        self.close_depth = percentile_torch(self.depths, 3)
+        self.inf_depth = percentile_torch(self.depths, 99.9)
+        # values larger than inf_depth should be regarded as unreliable, use 0 to replace them
+        self.depths[self.depths > self.inf_depth] = 0
+        # pre norm depth to be in [0, 1]
+        self.depths = (self.depths - self.close_depth) / (self.inf_depth -
+                                                            self.close_depth + torch.finfo(self.depths.dtype).eps)
+
+        # generate dummy pose
+        self.poses = torch.stack(
+            [torch.eye(4)] * len(paths_img)).float()
+
+        # bds, torch.Size([1, 2])
+        self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
+
+        self.median_imgs, _ = torch.median(imgs.reshape(
+            len(paths_img), intrinsics.height, intrinsics.width, 3), dim=0)
+        self.median_imgs = self.median_imgs.reshape(
+            1, *self.median_imgs.shape)
+
+        self.mask_weights = self.masks.clone()
+        self.mask_weights = torch.Tensor(
+            1.0 - self.mask_weights).to(torch.device("cpu"))
+
+        self.mask_weights = self.mask_weights.reshape(
+            len(paths_img), intrinsics.height, intrinsics.width)
+        freq = (1 - self.mask_weights).sum(0)
+        self.p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
+        self.mask_weights = self.mask_weights * \
+            (1.0 + self.p * self.p_ratio)
+        self.mask_weights = self.mask_weights.reshape(
+            -1) / torch.sum(self.mask_weights)
+        # self.global_translation = torch.tensor([0, 0, 2.])
+        # self.global_scale = torch.tensor([0.5, 0.6, 1])
+        # Normalize timestamps between -1, 1
+
+        self.timestamps = (timestamps.float() / max(timestamps)) * 2 - 1
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
         if split == 'train':
             self.timestamps = self.timestamps[:, None, None].repeat(
@@ -228,7 +324,11 @@ class VideoEndoDataset(BaseDataset):
             scene_bbox = torch.tensor(scene_bbox)
         else:
             scene_bbox = get_bbox(
+<<<<<<< HEAD
                 datadir, is_contracted=contraction, dset_type=dset_type)
+=======
+                datadir, is_contracted=contraction, dset_type='llff')
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         super().__init__(
             datadir=datadir,
             split=split,
@@ -247,7 +347,11 @@ class VideoEndoDataset(BaseDataset):
         self.isg_weights = None
         self.ist_weights = None
 
+<<<<<<< HEAD
         if split == "train" and dset_type == 'llff':  # Only use importance sampling with DyNeRF videos
+=======
+        if split == "train":  # Only use importance sampling with DyNeRF videos
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
             if self.maskIS:
                 if os.path.exists(os.path.join(datadir, f"isg_weights_masked.pt")):
                     self.isg_weights = torch.load(
@@ -451,6 +555,7 @@ class VideoEndoDataset(BaseDataset):
             out['depths'] = self.depths[index].view(-1, self.depths.shape[-1])
         return out
 
+<<<<<<< HEAD
 
 class Video360Dataset(BaseDataset):
     len_time: int
@@ -751,6 +856,8 @@ class Video360Dataset(BaseDataset):
         return out
 
 
+=======
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 def get_bbox(datadir: str, dset_type: str, is_contracted=False) -> torch.Tensor:
     """Returns a default bounding box based on the dataset type, and contraction state.
 

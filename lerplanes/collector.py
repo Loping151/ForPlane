@@ -17,11 +17,14 @@ if len(args.dataname) > 0:
     dataname = args.dataname
 else:
     dataname = ''
+<<<<<<< HEAD
 # elif args.index is not None and args.index < len(datalist):
 #     dataname = datalist[args.index]
 # else:
 #     print('Invalid index')
 #     exit()
+=======
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
 if args.path == '':
     if os.path.exists('logs'):
@@ -53,9 +56,12 @@ with open(os.path.join(directory, 'performance', '2000all_results.csv'), mode='w
         with open(os.path.join(os.path.dirname(file_path), 'config.csv'), 'r') as config, open(file_path, 'r') as endolog, open(glob.glob(os.path.join(os.path.dirname(file_path), 'test*.csv'))[0]) as FLIPS:
             config = csv.reader(config, delimiter='\t')
             config = {rows[0]: rows[1] for rows in config}
+<<<<<<< HEAD
             # ratio = config.get('frequency_ratio')
             # isg = config.get('isg')
             # ist_step = config.get('ist_step')
+=======
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
             mertric = []
             for line in endolog:
                 key, value = line.strip().split(':')

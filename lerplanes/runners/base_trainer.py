@@ -210,11 +210,28 @@ class BaseTrainer(abc.ABC):
             self._normalize_01(depth)
         ).cpu().reshape(img_h, img_w)[..., None]
 
+<<<<<<< HEAD
     def calc_metrics(self, preds: torch.Tensor, gt: torch.Tensor):
         if gt.shape[-1] == 4:
             gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
 
         err = (gt - preds) ** 2
+=======
+    def calc_metrics(self, preds: torch.Tensor, gt: torch.Tensor, masks: Optional[torch.Tensor] = None):
+        if masks is None:
+            if gt.shape[-1] == 4:
+                gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
+
+            err = (gt - preds) ** 2
+        else:
+            # mask is not None, we just use mask to avoid invalid pixels
+            if gt.shape[-1] == 4:
+                gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
+            gt = gt * masks
+            preds = preds * masks
+
+            err = (gt - preds) ** 2
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         return {
             "mse": torch.mean(err),
             "psnr": metrics.psnr(preds, gt),
@@ -231,7 +248,12 @@ class BaseTrainer(abc.ABC):
                          img_idx: int,
                          name: Optional[str] = None,
                          save_outputs: bool = True,
+<<<<<<< HEAD
                          out_pred=False) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
+=======
+                         out_pred: bool=False,
+                         masks: Optional[torch.Tensor] = None) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         if isinstance(dset.img_h, int):
             img_h, img_w = dset.img_h, dset.img_w
         else:
@@ -265,7 +287,11 @@ class BaseTrainer(abc.ABC):
             gt = gt.reshape(img_h, img_w, -1).cpu()
             if gt.shape[-1] == 4:
                 gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
+<<<<<<< HEAD
             summary.update(self.calc_metrics(preds_rgb, gt))
+=======
+            summary.update(self.calc_metrics(preds_rgb, gt, masks=masks))
+>>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
             # out_img = torch.cat((out_img, gt), dim=0)
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
             # we want to save the images in a row not in a column
