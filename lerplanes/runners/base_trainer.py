@@ -240,7 +240,7 @@ class BaseTrainer(abc.ABC):
                          img_idx: int,
                          name: Optional[str] = None,
                          save_outputs: bool = True,
-                         out_pred: bool=False,
+                         out_pred: bool = False,
                          masks: Optional[torch.Tensor] = None) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
         if isinstance(dset.img_h, int):
             img_h, img_w = dset.img_h, dset.img_w
