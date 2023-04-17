@@ -8,7 +8,7 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-from lerplanes.datasets.video_datasets import Video360Dataset, VideoEndoDataset
+from lerplanes.datasets.video_datasets import VideoEndoDataset
 from lerplanes.utils.ema import EMA
 from lerplanes.utils.my_tqdm import tqdm
 from lerplanes.ops.image import metrics
@@ -261,19 +261,36 @@ class VideoTrainer(BaseTrainer):
     def init_model(self, **kwargs) -> LowrankModel:
         return initialize_model(self, **kwargs)
 
+    # def get_regularizers(self, **kwargs):
+        # return [
+            # HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
+            # DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
+            # DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+            # DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+            # PlaneTV(kwargs.get('plane_tv_weight', 0.0), what='field'),
+            # PlaneTV(kwargs.get('plane_tv_weight_proposal_net', 0.0), what='proposal_network'),
+            # L1TimePlanes(kwargs.get('l1_time_planes', 0.0), what='field'),
+            # L1TimePlanes(kwargs.get('l1_time_planes_proposal_net', 0.0), what='proposal_network'),
+            # TimeSmoothness(kwargs.get('time_smoothness_weight', 0.0), what='field'),
+            # TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
+        # ]
     def get_regularizers(self, **kwargs):
-        return [
-            HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
-            DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
-            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
-            DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+        losses =  [
             PlaneTV(kwargs.get('plane_tv_weight', 0.0), what='field'),
-            PlaneTV(kwargs.get('plane_tv_weight_proposal_net', 0.0), what='proposal_network'),
             L1TimePlanes(kwargs.get('l1_time_planes', 0.0), what='field'),
-            L1TimePlanes(kwargs.get('l1_time_planes_proposal_net', 0.0), what='proposal_network'),
             TimeSmoothness(kwargs.get('time_smoothness_weight', 0.0), what='field'),
-            TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
+            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+            DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
         ]
+        if not self.model.use_occ_grid: # proposal network
+            losses += [
+                PlaneTV(kwargs.get('plane_tv_weight_proposal_net', 0.0), what='proposal_network'),
+                L1TimePlanes(kwargs.get('l1_time_planes_proposal_net', 0.0), what='proposal_network'),
+                TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
+                DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
+                HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
+            ]
+        return losses
 
     @property
     def calc_metrics_every(self):
@@ -285,33 +302,22 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
     ist = kwargs.get('ist', False)
     keyframes = kwargs.get('keyframes', False)
     batch_size = kwargs['batch_size']
-    if kwargs.get('endo', None):
-        log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
-        tr_dset = VideoEndoDataset(
-        data_dir, split='train', downsample=data_downsample,
-        batch_size=batch_size,
-        max_cameras=kwargs.get('max_train_cameras', None),
-        max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
-        isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
-        near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-        scene_bbox=kwargs['scene_bbox'],
-        maskIS = kwargs.get('maskIS', False),
-        sample_from_masks = kwargs.get('sample_from_masks', False),
-        p_ratio = kwargs.get('p_ratio', 1),
-        frequency_ratio = kwargs.get('frequency_ratio', None),
-        bg_color = kwargs.get('bg_color', 1),
-    )
-    else:
-        log.info(f"Loading Video360Dataset with downsample={data_downsample}")
-        tr_dset = Video360Dataset(
-            data_dir, split='train', downsample=data_downsample,
-            batch_size=batch_size,
-            max_cameras=kwargs.get('max_train_cameras', None),
-            max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
-            isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-        )
+    log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
+    tr_dset = VideoEndoDataset(
+    data_dir, split='train', downsample=data_downsample,
+    batch_size=batch_size,
+    max_cameras=kwargs.get('max_train_cameras', None),
+    max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
+    isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
+    near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+    scene_bbox=kwargs['scene_bbox'],
+    maskIS = kwargs.get('maskIS', False),
+    sample_from_masks = kwargs.get('sample_from_masks', False),
+    p_ratio = kwargs.get('p_ratio', 1),
+    frequency_ratio = kwargs.get('frequency_ratio', None),
+    bg_color = kwargs.get('bg_color', 1),
+)
+
     if ist:
         tr_dset.switch_isg2ist()  # this should only happen in case we're reloading
 
@@ -328,27 +334,19 @@ def init_ts_data(data_dir, split, **kwargs):
         downsample = 1.0
     else:
         downsample = 2.0
-    if kwargs.get('endo', None):
-        ts_dset = VideoEndoDataset(
-            data_dir, split=split, downsample=downsample,
-            max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
-            contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-            maskIS = kwargs.get('maskIS', False),
-            sample_from_masks = kwargs.get('sample_from_masks', False),
-            p_ratio = kwargs.get('p_ratio', 1),
-            frequency_ratio = kwargs.get('frequency_ratio', None),
-            bg_color = kwargs.get('bg_color', 1),
-        )
-    else:
-        ts_dset = Video360Dataset(
-            data_dir, split=split, downsample=downsample,
-            max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
-            contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-        )
+    ts_dset = VideoEndoDataset(
+        data_dir, split=split, downsample=downsample,
+        max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
+        contraction=kwargs['contract'], ndc=kwargs['ndc'],
+        near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+        scene_bbox=kwargs['scene_bbox'],
+        maskIS = kwargs.get('maskIS', False),
+        sample_from_masks = kwargs.get('sample_from_masks', False),
+        p_ratio = kwargs.get('p_ratio', 1),
+        frequency_ratio = kwargs.get('frequency_ratio', None),
+        bg_color = kwargs.get('bg_color', 1),
+    )
+
     return {"ts_dset": ts_dset}
 
 
@@ -370,10 +368,6 @@ def save_all_metrics(per_scene_metrics, data_path):
     # pre-convert the elements to float
     if 'mse' in per_scene_metrics:
         per_scene_metrics['mse'] = list(map(tensor_to_float, per_scene_metrics['mse']))
-    # import json
-    # with open(data_path, 'w') as f:
-    # # Convert the dictionary to a JSON string and write it to disk.
-    #     json.dump(per_scene_metrics, f)
 
     df = pd.DataFrame.from_dict(per_scene_metrics)
     df.to_csv(data_path, index=True)

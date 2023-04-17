@@ -2,9 +2,10 @@ from typing import Tuple, Optional, Dict, Any, List
 import logging as log
 import os
 import resource
-
+from functools import partial
 import torch
-from torch.multiprocessing import Pool
+# from torch.multiprocessing import Pool
+from multiprocessing.pool import ThreadPool as Pool
 import torchvision.transforms
 from PIL import Image
 import imageio.v3 as iio
@@ -16,7 +17,9 @@ from lerplanes.utils.my_tqdm import tqdm
 pil2tensor = torchvision.transforms.ToTensor()
 # increase ulimit -n (number of open files) otherwise parallel loading might fail
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
-resource.setrlimit(resource.RLIMIT_NOFILE, (16192, rlimit[1]))
+resource.setrlimit(resource.RLIMIT_NOFILE, (32768, rlimit[1]))
+
+maxT = 4
 
 
 def _load_phototourism_image(idx: int,
@@ -32,7 +35,7 @@ def _load_phototourism_image(idx: int,
 
 
 def _parallel_loader_phototourism_image(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_phototourism_image(**args)
 
 
@@ -53,7 +56,7 @@ def _load_llff_image(idx: int,
 
 
 def _parallel_loader_llff_image(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_llff_image(**args)
 
 
@@ -89,7 +92,7 @@ def _load_nerf_image_pose(idx: int,
 
 
 def _parallel_loader_nerf_image_pose(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_nerf_image_pose(**args)
 
 
@@ -122,41 +125,41 @@ def _load_video_1cam(idx: int,
     return (imgs,
             poses[idx].expand(len(timestamps), -1, -1),
             med_img,
-            torch.tensor(timestamps, dtype=torch.int32))
+            torch.tensor(timestamps, dtype=torch.intmaxT))
 
 
 def _parallel_loader_video(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_video_1cam(**args)
 
 
 def _load_endo_mask_image(idx: int,
-                     paths: List[str],
-                     data_dir: str,
-                     out_h: int,
-                     out_w: int,
-                     ) -> torch.Tensor:
+                          paths: List[str],
+                          data_dir: str,
+                          out_h: int,
+                          out_w: int,
+                          ) -> torch.Tensor:
     f_path = paths[idx]
     # load mask, only contains 0 and 255
     mask = Image.open(f_path).convert('L')
 
     mask = mask.resize((out_w, out_h), Image.LANCZOS)
     mask = pil2tensor(mask)  # [H, W]
-    mask = mask.permute(1, 2, 0) # [H, W, 1]
-    return mask # , f_path
+    mask = mask.permute(1, 2, 0)  # [H, W, 1]
+    return mask  # , f_path
 
 
 def _parallel_loader_endo_mask_image(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_endo_mask_image(**args)
 
 
 def _load_endo_depth_image(idx: int,
-                     paths: List[str],
-                     data_dir: str,
-                     out_h: int,
-                     out_w: int,
-                     ) -> torch.Tensor:
+                           paths: List[str],
+                           data_dir: str,
+                           out_h: int,
+                           out_w: int,
+                           ) -> torch.Tensor:
     f_path = paths[idx]
     # load pred_depth, all values are integers
     depth = imageio.imread(f_path, ignoregamma=True).astype(np.float32)
@@ -173,7 +176,7 @@ def _load_endo_depth_image(idx: int,
 
 
 def _parallel_loader_endo_depth_image(args):
-    torch.set_num_threads(1)
+    torch.set_num_threads(maxT)
     return _load_endo_depth_image(**args)
 
 
@@ -189,16 +192,18 @@ def parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwa
 
 
 def parallel_load_endo_mask(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 1 # some bug cause stopping 
+    max_threads = maxT  # some bug cause stopping
     fn = _parallel_loader_endo_mask_image
-    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
+    outputs = parallel_load_images_wrappers(
+        max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
 
 def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
-    max_threads = 1
+    max_threads = maxT
     fn = _parallel_loader_endo_depth_image
-    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
+    outputs = parallel_load_images_wrappers(
+        max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
 
@@ -206,7 +211,7 @@ def parallel_load_images(tqdm_title,
                          dset_type: str,
                          num_images: int,
                          **kwargs) -> List[Any]:
-    max_threads = 1
+    max_threads = maxT
     if dset_type == 'llff':
         fn = _parallel_loader_llff_image
     elif dset_type == 'synthetic':
@@ -216,8 +221,9 @@ def parallel_load_images(tqdm_title,
     elif dset_type == 'video':
         fn = _parallel_loader_video
         # giac: Can increase to e.g. 10 if loading 4x subsampled images. Otherwise OOM.
-        max_threads = 1
+        max_threads = maxT
     else:
         raise ValueError(dset_type)
-    outputs = parallel_load_images_wrappers(max_threads, num_images, fn, tqdm_title, **kwargs)
+    outputs = parallel_load_images_wrappers(
+        max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
