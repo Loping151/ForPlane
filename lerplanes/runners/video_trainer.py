@@ -221,13 +221,6 @@ class VideoTrainer(BaseTrainer):
         # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
         gts = np.stack(gts, axis=0).astype(np.float64)
 
-        # gt_dir = os.path.join(data_dirs, 'images')
-        # mask_dir = os.path.join(data_dirs, 'gt_masks')
-        # img_dir = os.path.join(logdir, 'estm')
-        # gt_all = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
-        # mask_all = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
-        # gt_list = []
-        # mask_list = []
         img_list = []
         # indexex = []
         logdir = self.log_dir
