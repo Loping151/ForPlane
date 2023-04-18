@@ -8,3 +8,6 @@ lpips
 imageio
 torchmetrics
 scikit-image
+open3d
+nerfacc
+tensorboard

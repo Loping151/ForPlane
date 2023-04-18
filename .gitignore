@@ -16,9 +16,6 @@ scripts/*
 __pycache__/
 
 *.csv
-<<<<<<< HEAD
-=======
 
 
 *.txt
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb

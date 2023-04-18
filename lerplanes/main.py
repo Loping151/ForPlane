@@ -1,10 +1,5 @@
 from lerplanes.utils.parse_args import parse_optfloat
 from lerplanes.utils.create_rendering import render_to_path, decompose_space_time, render_to_path_with_pointcloud
-<<<<<<< HEAD
-from lerplanes.runners import static_trainer
-from lerplanes.runners import phototourism_trainer
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 from lerplanes.runners import video_trainer
 import torch.utils.data
 import torch
@@ -61,44 +56,6 @@ def setup_logging(log_level=logging.INFO):
                         force=True)
 
 
-<<<<<<< HEAD
-def load_data(model_type: str, data_downsample, data_dirs, validate_only: bool, render_only: bool, **kwargs):
-    data_downsample = parse_optfloat(data_downsample, default_val=1.0)
-
-    if model_type == 'endovideo':
-        return video_trainer.load_data(
-            data_downsample, data_dirs, validate_only=validate_only,
-            render_only=render_only, **kwargs)
-    elif model_type == "video":
-        return video_trainer.load_data(
-            data_downsample, data_dirs, validate_only=validate_only,
-            render_only=render_only, **kwargs)
-    elif model_type == "phototourism":
-        return phototourism_trainer.load_data(
-            data_downsample, data_dirs, validate_only=validate_only,
-            render_only=render_only, **kwargs
-        )
-    else:
-        return static_trainer.load_data(
-            data_downsample, data_dirs, validate_only=validate_only,
-            render_only=render_only, **kwargs)
-
-
-def init_trainer(model_type: str, **kwargs):
-    if model_type == "video":
-        from lerplanes.runners import video_trainer
-        return video_trainer.VideoTrainer(**kwargs)
-    elif model_type == "endovideo":
-        from lerplanes.runners import video_trainer
-        # in fact, endo dataset still uses video trainer.
-        return video_trainer.VideoTrainer(**kwargs)
-    elif model_type == "phototourism":
-        from lerplanes.runners import phototourism_trainer
-        return phototourism_trainer.PhototourismTrainer(**kwargs)
-    else:
-        from lerplanes.runners import static_trainer
-        return static_trainer.StaticTrainer(**kwargs)
-=======
 def load_data(data_downsample, data_dirs, validate_only: bool, render_only: bool, **kwargs):
     data_downsample = parse_optfloat(data_downsample, default_val=1.0)
 
@@ -110,7 +67,6 @@ def load_data(data_downsample, data_dirs, validate_only: bool, render_only: bool
 def init_trainer(**kwargs):
     from lerplanes.runners import video_trainer
     return video_trainer.VideoTrainer(**kwargs)
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
 
 def save_config(config):
@@ -161,18 +117,6 @@ def main():
     config.update(overrides_dict)
     config['batch_size'] = int(config['batch_size'])
     config['num_steps'] = int(config['num_steps'])
-<<<<<<< HEAD
-    if "keyframes" in config:
-        if 'endo' in config:
-            model_type = 'endovideo'
-        else:
-            model_type = "video"
-    elif "appearance_embedding_dim" in config:
-        model_type = "phototourism"
-    else:
-        model_type = "static"
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
     validate_only = args.validate_only
     render_only = args.render_only
     spacetime_only = args.spacetime_only
@@ -197,37 +141,14 @@ def main():
     else:
         save_config(config)
 
-<<<<<<< HEAD
-    data = load_data(model_type, validate_only=validate_only,
-                     render_only=render_only or spacetime_only, **config)
-    config.update(data)
-    trainer = init_trainer(model_type, **config)
-=======
     data = load_data(validate_only=validate_only,
                      render_only=render_only or spacetime_only, **config)
     config.update(data)
     trainer = init_trainer(**config)
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
     if args.log_dir is None and os.path.exists(os.path.join(config['logdir'], config['expname'], "model.pth")):
         args.log_dir = os.path.join(config['logdir'], config['expname'])
 
-<<<<<<< HEAD
-    if args.log_dir is not None:
-        checkpoint_path = os.path.join(args.log_dir, "model.pth")
-        is_training = not (validate_only or render_only or spacetime_only)
-        trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
-
-    if validate_only:
-        # if config['endo'] == True:
-        #     trainer.validate_endo()
-        trainer.validate()
-    elif render_only:
-        if 'endo' in config:
-            render_to_path_with_pointcloud(trainer)
-        else:
-            render_to_path(trainer, extra_name="")
-=======
     # always train a new model
     # if args.log_dir is not None:
     #     checkpoint_path = os.path.join(args.log_dir, "model.pth")
@@ -238,19 +159,13 @@ def main():
         trainer.validate()
     elif render_only:
         render_to_path_with_pointcloud(trainer)
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
     elif spacetime_only:
         decompose_space_time(trainer, extra_name="")
     elif args.save_train_time_step:
         trainer.train_with_time_step_saving(trainer) 
     else:
         trainer.train()
-<<<<<<< HEAD
-        if 'endo' in config:
-            render_to_path_with_pointcloud(trainer)
-=======
         render_to_path_with_pointcloud(trainer)
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
 
 if __name__ == "__main__":

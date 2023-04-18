@@ -8,11 +8,7 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-<<<<<<< HEAD
-from lerplanes.datasets.video_datasets import Video360Dataset, VideoEndoDataset
-=======
 from lerplanes.datasets.video_datasets import VideoEndoDataset
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 from lerplanes.utils.ema import EMA
 from lerplanes.utils.my_tqdm import tqdm
 from lerplanes.ops.image import metrics
@@ -105,52 +101,6 @@ class VideoTrainer(BaseTrainer):
 
         return scale_ok
 
-<<<<<<< HEAD
-    def train_with_time_step_saving(self):
-        """used for render per second images"""
-        if self.global_step is None:
-            self.global_step = 0
-        log.info(f"Starting training from step {self.global_step + 1}")
-        pb = tqdm(initial=self.global_step, total=self.num_steps)
-        try:
-            self.pre_epoch()
-            batch_iter = iter(self.train_data_loader)
-            while self.global_step < self.num_steps:
-                self.timer.reset()
-                self.model.step_before_iter(self.global_step)
-                self.global_step += 1
-                self.timer.check("step-before-iter")
-                try:
-                    data = next(batch_iter)
-                    self.timer.check("dloader-next")
-                except StopIteration:
-                    self.pre_epoch()
-                    batch_iter = iter(self.train_data_loader)
-                    data = next(batch_iter)
-                    log.info("Reset data-iterator")
-
-                try:
-                    step_successful = self.train_step(data)
-                except StopIteration:
-                    self.pre_epoch()
-                    batch_iter = iter(self.train_data_loader)
-                    log.info("Reset data-iterator")
-                    step_successful = True
-
-                if step_successful and self.scheduler is not None:
-                    self.scheduler.step()
-                for r in self.regularizers:
-                    r.step(self.global_step)
-                self.post_step(progress_bar=pb)
-                self.timer.check("after-step")
-        finally:
-            self.save_model()
-            pb.close()
-            self.writer.close()
-
-
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
     def post_step(self, progress_bar):
         super().post_step(progress_bar)
 
@@ -159,64 +109,6 @@ class VideoTrainer(BaseTrainer):
         # Reset randomness in train-dataset
         self.train_dataset.reset_iter()
 
-<<<<<<< HEAD
-    # @torch.no_grad()
-    # def validate(self):
-    #     dataset = self.test_dataset
-    #     per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
-    #     pred_frames, out_depths = [], []
-    #     pb = tqdm(total=len(dataset), desc=f"Test scene ({dataset.name})")
-    #     for img_idx, data in enumerate(dataset):
-    #         preds = self.eval_step(data)
-    #         out_metrics, out_img, out_depth = self.evaluate_metrics(
-    #             data["imgs"], preds, dset=dataset, img_idx=img_idx, name=None,
-    #             save_outputs=self.save_outputs)
-    #         pred_frames.append(out_img)
-    #         if out_depth is not None:
-    #             out_depths.append(out_depth)
-    #         for k, v in out_metrics.items():
-    #             per_scene_metrics[k].append(v)
-    #         pb.set_postfix_str(f"PSNR={out_metrics['psnr']:.2f}", refresh=False)
-    #         pb.update(1)
-
-    #     pb.close()
-    #     if self.save_video:
-    #         write_video_to_file(
-    #             os.path.join(self.log_dir, f"step{self.global_step}.mp4"),
-    #             pred_frames
-    #         )
-    #         if len(out_depths) > 0:
-    #             write_video_to_file(
-    #                 os.path.join(self.log_dir, f"step{self.global_step}-depth.mp4"),
-    #                 out_depths
-    #             )
-    #     # Calculate JOD (on whole video)
-    #     if self.compute_video_metrics:
-    #         # per_scene_metrics["JOD"] = metrics.jod(
-    #         #     [f[:dataset.img_h, :, :] for f in pred_frames],
-    #         #     [f[dataset.img_h: 2*dataset.img_h, :, :] for f in pred_frames],
-    #         # )
-    #         per_scene_metrics["FLIP"] = metrics.flip(
-    #             [f[:, :dataset.img_w, :] for f in pred_frames],
-    #             [f[:, dataset.img_w: 2*dataset.img_w, :] for f in pred_frames],
-    #         )
-
-    #     val_metrics = [
-    #         self.report_test_metrics(per_scene_metrics, extra_name=f'step_{self.global_step}'),
-    #     ]
-    #     df = pd.DataFrame.from_records(val_metrics)
-    #     df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
-    #     # here we save all metrics to a csv file for further analysis
-    #     save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv"))
-
-    # @torch.no_grad()
-    # def validate(self):
-    #     # 夺舍
-    #     self.validate_endo(self)
-
-    @torch.no_grad()
-    def validate(self): # Todo: @kailing
-=======
     @torch.no_grad()
     def validate_origin_images(self):
         dataset = self.test_dataset
@@ -269,7 +161,6 @@ class VideoTrainer(BaseTrainer):
 
     @torch.no_grad()
     def validate(self):
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         dataset = self.test_dataset
         pred_frames, out_depths = [], []
         per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
@@ -280,10 +171,6 @@ class VideoTrainer(BaseTrainer):
         flip_mask = np.array(masks.clone())
         masks = torch.Tensor(1.0 - masks).to(device).unsqueeze(-1)
         gts = (dataset.imgs/255).reshape(stdshape)
-<<<<<<< HEAD
-        # masks = np.stack(mask_list, axis=0).astype(np.float32) / 255.0
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         gts = np.stack(gts, axis=0).astype(np.float64)
 
         img_list = []
@@ -304,26 +191,6 @@ class VideoTrainer(BaseTrainer):
             img_list.append(out_pred.clone())
             imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
 
-<<<<<<< HEAD
-        # for img_idx, data in tqdm(enumerate(dataset)):
-        #     preds = self.eval_step(data)
-        #     if isinstance(dataset.img_h, int):
-        #         img_h, img_w = dataset.img_h, dataset.img_w
-        #     else:
-        #         img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
-        #     preds_rgb = (
-        #         preds["rgb"]
-        #         .reshape(img_h, img_w, 3)
-        #         .cpu()
-        #         .clamp(0, 1)
-        #     )
-        #     if not torch.isfinite(preds_rgb).all():
-        #         log.warning(f"Predictions have {torch.isnan(preds_rgb).sum()} NaNs, "
-        #                     f"{torch.isinf(preds_rgb).sum()} infs.")
-        #         preds_rgb = torch.nan_to_num(preds_rgb, nan=0.0)
-
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         if self.save_video:
             write_video_to_file(
                 os.path.join(self.log_dir, f"step{self.global_step}.mp4"),
@@ -357,27 +224,6 @@ class VideoTrainer(BaseTrainer):
         # here we save all metrics to a csv file for further analysis
         save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv")) 
 
-<<<<<<< HEAD
-            # if not os.path.exists(os.path.join(logdir, 'gt_img')):
-            #     os.mkdir(os.path.join(logdir, 'gt_img'))
-            # if not os.path.exists(os.path.join(logdir, 'gt_mask')):
-            #     os.mkdir(os.path.join(logdir, 'gt_mask'))
-            # if debug:
-        
-                # imageio.imwrite(os.path.join(logdir, 'gt_img', str(img_idx)+'.png'), gt_all[img_idx])
-                # imageio.imwrite(os.path.join(logdir, 'gt_mask', str(img_idx)+'.png'), mask_all[img_idx])
-            # indexex.append(img_idx)
-            # gt_list.append(gt_all[img_idx])
-            # mask_list.append(mask_all[img_idx])
-        # img_list = [imageio.imread(os.path.join(logdir, 'estm', fn)) for fn in sorted(os.listdir(os.path.join(logdir, 'estm'))) if fn.endswith('.png')]
-        # gt_list = [imageio.imread(os.path.join(gt_dir, fn)) for fn in sorted(os.listdir(gt_dir)) if fn.endswith('.png')]
-        # mask_list = [imageio.imread(os.path.join(mask_dir, fn)) for fn in sorted(os.listdir(mask_dir)) if fn.endswith('.png')]
-        # img_list = [imageio.imread(os.path.join(img_dir, fn)) for fn in sorted(os.listdir(img_dir)) if fn.endswith('.png')]
-        # gt_list = [gt_list[i] for i in indexex]
-        # mask_list = [mask_list[i] for i in indexex]
-
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
         imgs = np.stack(img_list, axis=0).astype(np.float64)
         gts = torch.Tensor(gts).to(device) * masks
         imgs = torch.Tensor(imgs).to(device) * masks
@@ -415,21 +261,6 @@ class VideoTrainer(BaseTrainer):
     def init_model(self, **kwargs) -> LowrankModel:
         return initialize_model(self, **kwargs)
 
-<<<<<<< HEAD
-    def get_regularizers(self, **kwargs):
-        return [
-            HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
-            DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
-            DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
-            DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
-            PlaneTV(kwargs.get('plane_tv_weight', 0.0), what='field'),
-            PlaneTV(kwargs.get('plane_tv_weight_proposal_net', 0.0), what='proposal_network'),
-            L1TimePlanes(kwargs.get('l1_time_planes', 0.0), what='field'),
-            L1TimePlanes(kwargs.get('l1_time_planes_proposal_net', 0.0), what='proposal_network'),
-            TimeSmoothness(kwargs.get('time_smoothness_weight', 0.0), what='field'),
-            TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
-        ]
-=======
     # def get_regularizers(self, **kwargs):
         # return [
             # HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
@@ -460,7 +291,6 @@ class VideoTrainer(BaseTrainer):
                 HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
             ]
         return losses
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
 
     @property
     def calc_metrics_every(self):
@@ -472,35 +302,6 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
     ist = kwargs.get('ist', False)
     keyframes = kwargs.get('keyframes', False)
     batch_size = kwargs['batch_size']
-<<<<<<< HEAD
-    if kwargs.get('endo', None):
-        log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
-        tr_dset = VideoEndoDataset(
-        data_dir, split='train', downsample=data_downsample,
-        batch_size=batch_size,
-        max_cameras=kwargs.get('max_train_cameras', None),
-        max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
-        isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
-        near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-        scene_bbox=kwargs['scene_bbox'],
-        maskIS = kwargs.get('maskIS', False),
-        sample_from_masks = kwargs.get('sample_from_masks', False),
-        p_ratio = kwargs.get('p_ratio', 1),
-        frequency_ratio = kwargs.get('frequency_ratio', None),
-        bg_color = kwargs.get('bg_color', 1),
-    )
-    else:
-        log.info(f"Loading Video360Dataset with downsample={data_downsample}")
-        tr_dset = Video360Dataset(
-            data_dir, split='train', downsample=data_downsample,
-            batch_size=batch_size,
-            max_cameras=kwargs.get('max_train_cameras', None),
-            max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
-            isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-        )
-=======
     log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
     tr_dset = VideoEndoDataset(
     data_dir, split='train', downsample=data_downsample,
@@ -517,7 +318,6 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
     bg_color = kwargs.get('bg_color', 1),
 )
 
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
     if ist:
         tr_dset.switch_isg2ist()  # this should only happen in case we're reloading
 
@@ -534,29 +334,6 @@ def init_ts_data(data_dir, split, **kwargs):
         downsample = 1.0
     else:
         downsample = 2.0
-<<<<<<< HEAD
-    if kwargs.get('endo', None):
-        ts_dset = VideoEndoDataset(
-            data_dir, split=split, downsample=downsample,
-            max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
-            contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-            maskIS = kwargs.get('maskIS', False),
-            sample_from_masks = kwargs.get('sample_from_masks', False),
-            p_ratio = kwargs.get('p_ratio', 1),
-            frequency_ratio = kwargs.get('frequency_ratio', None),
-            bg_color = kwargs.get('bg_color', 1),
-        )
-    else:
-        ts_dset = Video360Dataset(
-            data_dir, split=split, downsample=downsample,
-            max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
-            contraction=kwargs['contract'], ndc=kwargs['ndc'],
-            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-            scene_bbox=kwargs['scene_bbox'],
-        )
-=======
     ts_dset = VideoEndoDataset(
         data_dir, split=split, downsample=downsample,
         max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
@@ -570,7 +347,6 @@ def init_ts_data(data_dir, split, **kwargs):
         bg_color = kwargs.get('bg_color', 1),
     )
 
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
     return {"ts_dset": ts_dset}
 
 
@@ -592,18 +368,6 @@ def save_all_metrics(per_scene_metrics, data_path):
     # pre-convert the elements to float
     if 'mse' in per_scene_metrics:
         per_scene_metrics['mse'] = list(map(tensor_to_float, per_scene_metrics['mse']))
-<<<<<<< HEAD
-    # import json
-    # with open(data_path, 'w') as f:
-    # # Convert the dictionary to a JSON string and write it to disk.
-    #     json.dump(per_scene_metrics, f)
 
     df = pd.DataFrame.from_dict(per_scene_metrics)
     df.to_csv(data_path, index=True)
-
-
-=======
-
-    df = pd.DataFrame.from_dict(per_scene_metrics)
-    df.to_csv(data_path, index=True)
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb

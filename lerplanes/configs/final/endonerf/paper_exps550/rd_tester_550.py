@@ -12,7 +12,7 @@ config = {
     'ndc_far': 2.0,
     'isg': True,
     'isg_step': 1,
-    'ist_step': 55,
+    'ist_step': 110,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'maskIS': True,
@@ -21,7 +21,7 @@ config = {
     'bg_color': 0,
 
     # Optimization settings
-    'num_steps': 550,
+    'num_steps': 1100,
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -40,11 +40,11 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 225,
+    'step_iter': 550,
 
     # Training settings
-    'valid_every': 550,
-    'save_every': 550,
+    'valid_every': 1100,
+    'save_every': 1100,
     'save_outputs': True,
     'train_fp16': True,
 
@@ -52,14 +52,15 @@ config = {
     'single_jitter': False,
     'num_samples': 64,
     'num_proposal_iterations': 2,
-    'num_proposal_samples': [1, 1],
-    'use_same_proposal_network': False,
+    'num_proposal_samples': [128, 64],
+    'use_same_proposal_network': True,
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 156]},
-        {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [256, 256, 256, 156]}
+            'resolution': [128, 128, 128, 156]}
+        #     ,
+        # {'num_input_coords': 4, 'num_output_coords': 8,
+        #     'resolution': [256, 256, 256, 156]}
     ],
     #  'max_train_tsteps': 100000,
 
