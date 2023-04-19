@@ -10,11 +10,13 @@ import skimage.metrics
 import torch
 from torchmetrics import MultiScaleStructuralSimilarityIndexMeasure
 import lpips
+from pytorch_msssim import ms_ssim
+
 
 from .io import write_video_to_file, write_png
 
 
-ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0)
+# ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0)
 
 """ A module for image based metrics """
 

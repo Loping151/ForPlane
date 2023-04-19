@@ -249,7 +249,6 @@ class BaseTrainer(abc.ABC):
         preds_rgb = (
             preds["rgb"]
             .reshape(img_h, img_w, 3)
-            .cpu()
             .clamp(0, 1)
         )
         if not torch.isfinite(preds_rgb).all():
@@ -261,21 +260,21 @@ class BaseTrainer(abc.ABC):
 
         out_depth = None
         if "depth" in preds:
-            out_depth = preds["depth"].cpu().reshape(img_h, img_w)[..., None]
+            out_depth = preds["depth"].reshape(img_h, img_w)[..., None]
         preds.pop("depth")
 
         # This is used for proposal-depth keys
         for k in preds.keys():
             if "depth" in k:
-                prop_depth = preds[k].cpu().reshape(img_h, img_w)[..., None]
+                prop_depth = preds[k].reshape(img_h, img_w)[..., None]
                 out_depth = torch.cat(
                     (out_depth, prop_depth), dim=1) if out_depth is not None else prop_depth  # horizontal concat
 
         if gt is not None:
-            gt = gt.reshape(img_h, img_w, -1).cpu()
+            gt = gt.reshape(img_h, img_w, -1)
             if gt.shape[-1] == 4:
                 gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
-            summary.update(self.calc_metrics(preds_rgb, gt, masks=masks))
+            summary.update(self.calc_metrics(preds_rgb.cuda(), gt.cuda(), masks=masks.cuda() if masks is not None else None))
             # out_img = torch.cat((out_img, gt), dim=0)
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
             # we want to save the images in a row not in a column
@@ -314,7 +313,7 @@ class BaseTrainer(abc.ABC):
         for k in scene_metrics:
             ak = f"{k}_{extra_name}"
             scene_metrics_agg[ak] = np.mean(
-                np.asarray(scene_metrics[k])).item()
+                np.asarray([i.cpu() for i in scene_metrics[k]] if k == 'mse' else scene_metrics[k])) # .item()
             log_text += f" | {k}: {scene_metrics_agg[ak]:.4f}"
             self.writer.add_scalar(
                 f"test/{ak}", scene_metrics_agg[ak], self.global_step)

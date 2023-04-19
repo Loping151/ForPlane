@@ -600,6 +600,8 @@ def dynerf_isg_weight(imgs, median_imgs, gamma, masks=None):
 # DyNerf uses alpha=0.1
 def dynerf_ist_weight(imgs, num_cameras, alpha=0.1, frame_shift=25, masks=None, p=None, ratio=None):
     assert imgs.dtype == torch.uint8
+    if imgs.shape[0] < frame_shift * 2:
+        frame_shift = round(imgs.shape[0] / 2)
     N, h, w, c = imgs.shape
     if masks is not None:
         for i in range(len(masks)):
