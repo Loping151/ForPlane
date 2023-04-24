@@ -1,12 +1,12 @@
 config = {
     'description': 'full version 3min with xyzt blob encoding and isg-ist',
 
-    'expname': 'cu_full_550',
+    'expname': 'traction',
     'logdir': './logs/debug',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/toy'],
+    'data_dirs': ['data/endonerf_full_datasets/traction'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
@@ -43,7 +43,7 @@ config = {
     'step_iter': 1500,
 
     # Training settings
-    'valid_every': 1,
+    'valid_every': 3000,
     'save_every': 3000,
     'save_outputs': True,
     'train_fp16': True,
@@ -85,4 +85,4 @@ config = {
     ],
 }
 
-# PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/rd_tester_550.py
+# PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/acc_tester.py

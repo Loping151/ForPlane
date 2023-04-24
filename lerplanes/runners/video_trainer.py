@@ -18,7 +18,8 @@ from .base_trainer import BaseTrainer, init_dloader_random, initialize_model
 from .regularization import (
     PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss, DepthLossHuber
 )
-import imageio
+import cv2
+from torch.profiler import profile, record_function, ProfilerActivity
 import numpy as np
 from utils.eval_rgb import img2mse, mse2psnr, ssim, lpips
 
@@ -66,6 +67,7 @@ class VideoTrainer(BaseTrainer):
         Note that here `data` contains a whole image. we need to split it up before tracing
         for memory constraints.
         """
+        # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         super().eval_step(data, **kwargs)
         batch_size = self.eval_batch_size
         with torch.cuda.amp.autocast(enabled=self.train_fp16), torch.no_grad():
@@ -87,6 +89,8 @@ class VideoTrainer(BaseTrainer):
                 for k, v in outputs.items():
                     if "rgb" in k or "depth" in k or "accumulation":
                         preds[k].append(v.cpu())
+        # with open("output_eval.txt", "a") as f:
+        #     f.write(str(prof.key_averages(group_by_stack_n=8).table(sort_by="self_cuda_time_total", row_limit=20,max_name_column_width=1000)))
         return {k: torch.cat(v, 0) for k, v in preds.items()}
 
     def train_step(self, data: Dict[str, Union[int, torch.Tensor]], **kwargs):
@@ -178,6 +182,8 @@ class VideoTrainer(BaseTrainer):
         logdir = self.log_dir
         if not os.path.exists(os.path.join(logdir, 'estm')):
             os.mkdir(os.path.join(logdir, 'estm'))
+            
+        # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         for img_idx, data in tqdm(enumerate(dataset)):
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
@@ -189,7 +195,11 @@ class VideoTrainer(BaseTrainer):
             for k, v in out_metrics.items():
                 per_scene_metrics[k].append(v)
             img_list.append(out_pred.clone())
-            imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
+            # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
+            cv2.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), np.array(out_pred))
+        # with open("output.txt", "w") as f:
+        #     f.write(str(prof.key_averages(group_by_stack_n=8).table(sort_by="self_cuda_time_total", row_limit=20,max_name_column_width=1000)))
+
 
         if self.save_video:
             write_video_to_file(

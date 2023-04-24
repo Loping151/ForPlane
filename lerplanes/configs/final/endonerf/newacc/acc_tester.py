@@ -1,7 +1,7 @@
 config = {
     'description': 'full version 3min with xyzt blob encoding and isg-ist',
 
-    'expname': 'cu_full_550',
+    'expname': 'toy',
     'logdir': './logs/debug',
     'device': 'cuda:0',
 
@@ -85,4 +85,4 @@ config = {
     ],
 }
 
-# PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/rd_tester_550.py
+# PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/newacc/acc_tester.py

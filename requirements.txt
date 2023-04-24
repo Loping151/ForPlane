@@ -1,3 +1,4 @@
+git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
 jax
 tqdm
 torch
@@ -11,3 +12,6 @@ scikit-image
 open3d
 nerfacc
 tensorboard
+pytorch-msssim
+imageio[ffmpeg]
+imageio[av]

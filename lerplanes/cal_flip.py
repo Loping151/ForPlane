@@ -14,6 +14,7 @@ from typing import List, Dict, Any
 import tempfile
 import numpy as np
 import imageio.v2 as imageio
+import cv2
 from lerplanes.ops.image import metrics
 
 @staticmethod
@@ -53,7 +54,7 @@ with open(os.path.join(directory, 'performance', '2000flip.csv'), mode='w', newl
        gt_all = []
        masks = []
        estmdir = os.path.join(dirname, 'estm')
-       estm = [imageio.imread(os.path.join(estmdir, fn)) for fn in common_sort(os.listdir(estmdir)) if fn.endswith('.png')]
+       estm = [cv2.imread(os.path.join(estmdir, fn)) for fn in common_sort(os.listdir(estmdir)) if fn.endswith('.png')]
        prefix = (len(estm), 512, 640, 3)
        with open(os.path.join(dirname, 'config.csv'), 'r') as config:
             config = csv.reader(config, delimiter='\t')

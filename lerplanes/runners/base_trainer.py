@@ -21,7 +21,7 @@ from lerplanes.runners.regularization import Regularizer
 from lerplanes.ops.lr_scheduling import (
     get_cosine_schedule_with_warmup, get_step_schedule_with_warmup
 )
-
+from torch.profiler import profile, record_function, ProfilerActivity
 
 class BaseTrainer(abc.ABC):
     def __init__(self,
@@ -242,6 +242,7 @@ class BaseTrainer(abc.ABC):
                          save_outputs: bool = True,
                          out_pred: bool = False,
                          masks: Optional[torch.Tensor] = None) -> Tuple[dict, np.ndarray, Optional[np.ndarray]]:
+
         if isinstance(dset.img_h, int):
             img_h, img_w = dset.img_h, dset.img_w
         else:
@@ -269,15 +270,18 @@ class BaseTrainer(abc.ABC):
                 prop_depth = preds[k].reshape(img_h, img_w)[..., None]
                 out_depth = torch.cat(
                     (out_depth, prop_depth), dim=1) if out_depth is not None else prop_depth  # horizontal concat
-
         if gt is not None:
             gt = gt.reshape(img_h, img_w, -1)
             if gt.shape[-1] == 4:
                 gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
-            summary.update(self.calc_metrics(preds_rgb.cuda(), gt.cuda(), masks=masks.cuda() if masks is not None else None))
+
+            # summary.update(self.calc_metrics(preds_rgb.cuda(), gt.cuda(), masks=masks.cuda() if masks is not None else None))
+            # summary.update(self.calc_metrics(preds_rgb, gt, masks=masks))
+
             # out_img = torch.cat((out_img, gt), dim=0)
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
             # we want to save the images in a row not in a column
+
             out_img = torch.cat((out_img, gt), dim=1)
             out_img = torch.cat((out_img, self._normalize_err(
                 preds_rgb, gt)), dim=1)  # pred, gt, error map
@@ -296,7 +300,8 @@ class BaseTrainer(abc.ABC):
             if out_depth is not None:
                 depth_name = out_name + "-depth"
                 write_png(os.path.join(self.log_dir,
-                          depth_name + ".png"), out_depth_np)
+                        depth_name + ".png"), out_depth_np)
+
         if out_pred:
             return summary, out_img_np, out_depth_np, preds_rgb
         return summary, out_img_np, out_depth_np

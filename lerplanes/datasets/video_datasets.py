@@ -120,6 +120,10 @@ class VideoEndoDataset(BaseDataset):
             out_w=intrinsics.width,
         )
 
+        # imgs = [i.cuda() for i in imgs]
+        # masks = [i.cuda() for i in masks]
+        # depths = [i.cuda() for i in depths]
+
         timestamps = torch.linspace(0, 299, len(paths_img))
 
         imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [

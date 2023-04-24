@@ -8,7 +8,7 @@ from typing import List
 import numpy as np
 import skimage.metrics
 import torch
-from torchmetrics import MultiScaleStructuralSimilarityIndexMeasure
+# from torchmetrics import MultiScaleStructuralSimilarityIndexMeasure
 import lpips
 from pytorch_msssim import ms_ssim
 
@@ -116,8 +116,10 @@ def ssim_old(rgb, gts):
         sigma=1.5,
         use_sample_covariance=False)
 
-
 def msssim(rgb, gts):
+    return 0
+
+def msssim_old(rgb, gts):
     assert (rgb.max() <= 1.05 and rgb.min() >= -0.05)
     assert (gts.max() <= 1.05 and gts.min() >= -0.05)
     return ms_ssim(torch.permute(rgb[None, ...], (0, 3, 1, 2)),
