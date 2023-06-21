@@ -26,7 +26,7 @@ config = {
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
     'lr': 0.01,
-    "eval_batch_size": 65536//2,
+    "eval_batch_size": 65536,
 
     # acc
     'occ_grid_reso': 64,
