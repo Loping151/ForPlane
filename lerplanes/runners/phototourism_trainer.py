@@ -257,7 +257,7 @@ class PhototourismTrainer(BaseTrainer):
         self.model.field.test_appearance_embedding.requires_grad_(False)
 
 
-def init_tr_data(data_downsample, data_dir, **kwargs):
+def init_train_data(data_downsample, data_dir, **kwargs):
     batch_size = kwargs['batch_size']
     log.info(f"Loading PhotoTourismDataset with downsample={data_downsample}")
     tr_dset = PhotoTourismDataset(
@@ -272,7 +272,7 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
     return {"tr_loader": tr_loader, "tr_dset": tr_dset}
 
 
-def init_ts_data(data_dir, split, **kwargs):
+def init_test_data(data_dir, split, **kwargs):
     ts_dset = PhotoTourismDataset(
         data_dir, split=split, batch_size=None,
         contraction=kwargs['contract'], ndc=kwargs['ndc'],
@@ -286,9 +286,9 @@ def load_data(data_downsample, data_dirs, validate_only, render_only, **kwargs):
     assert len(data_dirs) == 1
     od: Dict[str, Any] = {}
     if not validate_only and not render_only:
-        od.update(init_tr_data(data_downsample, data_dirs[0], **kwargs))
+        od.update(init_train_data(data_downsample, data_dirs[0], **kwargs))
     else:
         od.update(tr_loader=None, tr_dset=None)
     test_split = 'render' if render_only else 'test'
-    od.update(init_ts_data(data_dirs[0], split=test_split, **kwargs))
+    od.update(init_test_data(data_dirs[0], split=test_split, **kwargs))
     return od

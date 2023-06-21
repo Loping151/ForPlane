@@ -11,7 +11,7 @@ config = {
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': 1,
+    'isg_step': 0,
     'ist_step': 55,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],

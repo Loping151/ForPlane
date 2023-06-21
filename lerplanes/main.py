@@ -1,5 +1,5 @@
 from lerplanes.utils.parse_args import parse_optfloat
-from lerplanes.utils.create_rendering import render_to_path, decompose_space_time, render_to_path_with_pointcloud
+from lerplanes.utils.create_rendering import render_to_path, decompose_space_time, render_to_path_with_pointcloud, render_speed
 from lerplanes.runners import video_trainer
 import torch.utils.data
 import torch
@@ -106,11 +106,13 @@ def main():
     cfg = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cfg)
     config: Dict[str, Any] = cfg.config
+
     # Process overrides from argparse into config
     # overrides can be passed from the command line as key=value pairs. E.g.
     # python lerplanes/main.py --config-path lerplanes/config/cfg.py max_ts_frames=200
     # note that all values are strings, so code should assume incorrect data-types for anything
     # that's derived from config - and should not a string.
+
     overrides: List[str] = args.override
     overrides_dict = {ovr.split("=")[0]: ovr.split("=")[
         1] for ovr in overrides}
@@ -120,6 +122,7 @@ def main():
     validate_only = args.validate_only
     render_only = args.render_only
     spacetime_only = args.spacetime_only
+    
     if validate_only and render_only:
         raise ValueError(
             "render_only and validate_only are mutually exclusive.")
@@ -131,7 +134,8 @@ def main():
             "validate_only and spacetime_only are mutually exclusive.")
 
     assert not('mask' in config and 'maskIS' in config)
-
+    assert config['depth_type'] == 'mono_depth' and config['depth_huber_weight'] == 0 or config['depth_type'] != 'mono_depth' and config['mono_depth_weight'] == 0
+    assert config['depth_type'] == 'mono_depth' and config['mono_depth_weight'] > 0 or config['depth_type'] != 'mono_depth' and config['depth_huber_weight'] > 0
     pprint.pprint(config)
     if validate_only or render_only:
         if args.log_dir is None:
@@ -150,22 +154,24 @@ def main():
         args.log_dir = os.path.join(config['logdir'], config['expname'])
 
     # always train a new model
-    # if args.log_dir is not None:
-    #     checkpoint_path = os.path.join(args.log_dir, "model.pth")
-    #     is_training = not (validate_only or render_only or spacetime_only)
-    #     trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
+    if args.log_dir is not None:
+        checkpoint_path = os.path.join(args.log_dir, "model.pth")
+        is_training = not (validate_only or render_only or spacetime_only)
+        trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
 
     if validate_only:
         trainer.validate()
     elif render_only:
-        render_to_path_with_pointcloud(trainer)
+        render_to_path(trainer)
     elif spacetime_only:
         decompose_space_time(trainer, extra_name="")
     elif args.save_train_time_step:
         trainer.train_with_time_step_saving(trainer) 
     else:
         trainer.train()
-        render_to_path_with_pointcloud(trainer)
+        trainer.validate()
+        # render_to_path(trainer)
+        # render_speed(trainer)
 
 
 if __name__ == "__main__":

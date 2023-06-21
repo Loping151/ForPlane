@@ -1,27 +1,27 @@
 config = {
-    'description': 'full version 3min with xyzt blob encoding and isg-ist',
+    'description': 'hamlyn debug',
 
     'expname': 'toy',
-    'logdir': './logs/debug',
+    'logdir': './logs/hamlyn_exps',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/toy'],
+    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq1'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
     'isg': True,
-    'isg_step': 1,
-    'ist_step': 300,
+    'isg_step': 0,
+    'ist_step': 100,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'maskIS': True,
     'frequency_ratio': 1,
     'near_scaling': 0.95,
     'bg_color': 0,
-
+    'depth_type': 'mono_depth',
     # Optimization settings
-    'num_steps': 300,
+    'num_steps': 1000,
     'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -32,19 +32,21 @@ config = {
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
     'distortion_loss_weight': 0.0,
     'histogram_loss_weight': 1.0,
+    'mono_depth_weight': 0.1, 
+    'mono_depth_weight_proposal_net': 0.1, 
     'l1_time_planes': 0.0001,
     'l1_time_planes_proposal_net': 0.0001,
     'plane_tv_weight': 0.0001,
     'plane_tv_weight_proposal_net': 0.0001,
     'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
-    'depth_huber_weight': 0.05,
-    'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 1500,
+    'depth_huber_weight': 0, # 0.05
+    'depth_huber_weight_proposal_net': 0, # 0.05
+    'step_iter': 500,
 
     # Training settings
-    'valid_every': 1,
-    'save_every': 3000,
+    'valid_every': 1000,
+    'save_every': 1000,
     'save_outputs': True,
     'train_fp16': True,
 
@@ -57,7 +59,7 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 10]}
+            'resolution': [128, 128, 128, 300]}
         #     ,
         # {'num_input_coords': 4, 'num_output_coords': 8,
         #     'resolution': [256, 256, 256, 156]}
@@ -75,7 +77,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 10]
+            'resolution': [64, 64, 64, 300]
         },
         {
             'encoder_type': 'OneBlob',
@@ -86,3 +88,4 @@ config = {
 }
 
 # exit()
+# PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/hamlyn/debug_hamlyn.py

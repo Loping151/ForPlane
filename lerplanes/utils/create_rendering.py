@@ -2,10 +2,11 @@
 import os
 import logging as log
 from typing import Union
-import open3d as o3d
+# import open3d as o3d
 import cv2
 import torch
 import numpy as np
+import time
 
 from lerplanes.models.lowrank_model import LowrankModel
 from lerplanes.utils.my_tqdm import tqdm
@@ -13,6 +14,41 @@ from lerplanes.ops.image.io import write_video_to_file
 from lerplanes.runners.static_trainer import StaticTrainer
 from lerplanes.runners.video_trainer import VideoTrainer
 
+
+@torch.no_grad()
+def render_speed(trainer: Union[VideoTrainer, StaticTrainer]):
+    dataset = trainer.test_dataset
+    print('Warming up')
+    for img_idx, data in enumerate(dataset):
+        if img_idx > 15:
+            print('Done')
+            break
+        ts_render = trainer.eval_step(data)
+    pb = tqdm(total=len(dataset), desc=f"Evaluating time")
+    start_time = time.time()
+    for img_idx, data in enumerate(dataset):
+        ts_render = trainer.eval_step(data)
+        if isinstance(dataset.img_h, int):
+            img_h, img_w = dataset.img_h, dataset.img_w
+        else:
+            img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
+        preds_rgb = (
+            ts_render["rgb"]
+            .reshape(img_h, img_w, 3)
+            .cpu()
+            .clamp(0, 1)
+            .mul(255.0)
+            .byte()
+            .numpy()
+        )
+        pb.update(1)
+    time_in_all = time.time() - start_time
+    pb.close()
+    tpi = time_in_all / len(dataset)
+    
+    with open(os.path.join(trainer.log_dir, 'endo_log.txt'), 'a') as file:
+        file.writelines(('\n', 'time per image: ', str(tpi)))
+    return tpi
 
 @torch.no_grad()
 def render_to_path(trainer: Union[VideoTrainer, StaticTrainer], extra_name: str = "") -> None:
@@ -40,6 +76,7 @@ def render_to_path(trainer: Union[VideoTrainer, StaticTrainer], extra_name: str 
             .mul(255.0)
             .byte()
             .numpy()
+            .astype(np.uint8)
         )
         frames.append(preds_rgb)
         pb.update(1)
@@ -122,9 +159,9 @@ def render_to_path_with_pointcloud(trainer: Union[VideoTrainer, StaticTrainer], 
                 img_h, img_w)[..., None])
             np.save(os.path.join(trainer.log_dir, 'estm',
                     'depth'+str(len(depths)-1)+'.npy'), depths[-1])
-        # if "accumulation" in ts_render:
-            # acc = ts_render['accumulation'].cpu().reshape(img_h, img_w)
-            # cv2.imwrite( "acc.png",(ts_render['accumulation'].cpu().reshape(img_h, img_w).numpy()*255.).astype(np.uint8))
+        if "accumulation" in ts_render:
+            acc = ts_render['accumulation'].cpu().reshape(img_h, img_w)
+            cv2.imwrite( "acc.png",(ts_render['accumulation'].cpu().reshape(img_h, img_w).numpy()*255.).astype(np.uint8))
         pb.update(1)
     pb.close()
 

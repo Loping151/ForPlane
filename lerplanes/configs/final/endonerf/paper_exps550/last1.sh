@@ -48,3 +48,6 @@ PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/en
 # PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/nobg_thin.py
 # PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/nobg_traction.py
 # PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps550/nobg_tearing.py
+
+
+PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/configs/final/endonerf/paper_exps/full_550_cutting.py

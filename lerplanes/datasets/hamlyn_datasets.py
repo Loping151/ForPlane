@@ -11,19 +11,20 @@ import numpy as np
 import torch
 
 from .base_dataset import BaseDataset
-from .data_loading import parallel_load_images, parallel_load_depth, parallel_load_endo_mask
+from .data_loading import *
 from .intrinsics import Intrinsics
-from .llff_dataset import load_llff_poses_helper, load_endo_pose_helper
+from .llff_dataset import load_llff_poses_helper, load_endo_pose_helper, load_hamlyn_intrinsic
 from .ray_utils import (
     generate_spherical_poses, create_meshgrid, stack_camera_dirs, get_rays, generate_spiral_path
 )
-# from .synthetic_nerf_dataset import (
-#     load_360_images, load_360_intrinsics,
-# )
-# import imageio
+from .synthetic_nerf_dataset import (
+    load_360_images, load_360_intrinsics,
+)
+import imageio
 
 
-class VideoEndoDataset(BaseDataset):
+class VideoHamlynDataset(BaseDataset):
+    # this is a temp dataset for video endo dataset, sp for hamlyn
     len_time: int
     max_cameras: Optional[int]
     max_tsteps: Optional[int]
@@ -35,7 +36,7 @@ class VideoEndoDataset(BaseDataset):
                  batch_size: Optional[int] = None,
                  downsample: float = 1.0,
                  keyframes: bool = False,
-                 max_cameras: Optional[int] = None,
+                 max_cameras: Optional[int] = 1,
                  max_tsteps: Optional[int] = None,
                  isg: bool = False,
                  contraction: bool = False,
@@ -48,32 +49,37 @@ class VideoEndoDataset(BaseDataset):
         self.max_cameras = max_cameras
         self.max_tsteps = max_tsteps
         self.downsample = downsample
+        # sample method
         self.isg = isg
         self.ist = False
         self.maskIS = kwargs.get('maskIS', False)
         self.p_ratio = kwargs.get('p_ratio', 1)
         self.frequency_ratio = kwargs.get('frequency_ratio', None)
+
         if self.maskIS:
             assert self.frequency_ratio is not None
+
         self.sample_from_masks = kwargs.get('sample_from_masks', False)
         assert not(self.maskIS and self.sample_from_masks)
+
         # self.lookup_time = False
         self.per_cam_near_fars = None
         self.global_translation = torch.tensor([0, 0, 0])
         self.global_scale = torch.tensor([1, 1, 1])
+
         self.near_scaling = near_scaling
         self.ndc_far = ndc_far
         self.median_imgs = None
         self.mask_weights = None
         self.p = None  # p is the additional weight
-        self.bg_color = kwargs.get('bg_color', 1)
-        self.depth_type = kwargs.get('depth_type', 'depth')
 
+        self.bg_color = kwargs.get('bg_color', 1)
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
         
-        intrinsics = load_endo_pose_helper(
-            datadir, self.downsample, self.near_scaling)
+        intrinsics = load_hamlyn_intrinsic(datadir)
+        intrinsics.center_x = 320-0.5
+        intrinsics.center_y = 240-0.5
 
         if split == 'test':
             keyframes = False
@@ -86,13 +92,10 @@ class VideoEndoDataset(BaseDataset):
         while os.path.exists(datadir + "/images" + str_cnt):
             paths_img.append(datadir + "/images" + str_cnt)
             paths_mask.append(datadir + "/gt_masks" + str_cnt)
-            paths_depth.append(datadir + '/' + str(self.depth_type) + str_cnt)
+            paths_depth.append(datadir + "/pred_disp" + str_cnt)
             png_cnt += 1
             str_cnt = '/' + '0' * \
                 (6-len(str(png_cnt))) + str(png_cnt) + '.png'
-
-        assert len(paths_img) == len(paths_mask) == len(
-            paths_depth), "The lists must have the same length."
 
         imgs = parallel_load_images(
             data_dir=datadir,
@@ -113,8 +116,8 @@ class VideoEndoDataset(BaseDataset):
             out_h=intrinsics.height,
             out_w=intrinsics.width,
         )
-        depths = parallel_load_depth(
-            data_type = 'hamlyn' if 'hamlyn' in datadir else 'endo',
+
+        depths = parallel_load_hamlyn_depth(
             data_dir=datadir,
             tqdm_title=f"Loading {split} data",
             num_images=len(paths_depth),  # Need to be modifieds
@@ -122,50 +125,57 @@ class VideoEndoDataset(BaseDataset):
             out_h=intrinsics.height,
             out_w=intrinsics.width,
         )
-        timestamps = torch.linspace(0, 299, len(paths_img))
+
+        assert len(imgs) == len(masks) == len(
+            depths), "The number of images, masks and depths should be the same"
+
+        # conduct cropping
+        # for hamlyn dataset, we need to crop the images, masks and depths
+        # in all exps, we use crop_size this parameter to control the crop size
+        # in hamlyn dataset, we crop the image from the left side, with 40 pixels
+        crop_size = 40 # a setting for hamlyn dataset
+        imgs = [i[:, crop_size:, :] for i in imgs]
+        masks = [i[:, crop_size:, :] for i in masks]
+        depths = [i[:, crop_size:, :] for i in depths]
+        intrinsics.width = intrinsics.width - crop_size
+        # note the crop will change the intrinsics, we need to change the intrinsics accordingly
+        intrinsics.center_x = intrinsics.center_x - crop_size / 2
+
+        timestamps = torch.linspace(0, 1000, len(paths_img))
+        # Normalize timestamps between -1, 1
         self.timestamps = (timestamps.float() / max(timestamps)) * 2 - 1
-        if 'hamlyn' in datadir:
-            crop_size = 40 # a setting for hamlyn dataset   
-            imgs = [i[:, crop_size:, :] for i in imgs]
-            masks = [i[:, crop_size:, :] for i in masks]
-            depths = [i[:, crop_size:, :] for i in depths]
-            intrinsics.width = intrinsics.width - crop_size
-            # note the crop will change the intrinsics, we need to change the intrinsics accordingly
-            intrinsics.center_x = intrinsics.center_x - crop_size / 2
-            # timestamps = torch.linspace(0, 1000, len(paths_img))
-            # self.timestamps = (timestamps.float() / max(timestamps)) * 2 - 1
-            ### NOTE: we split the dataset into train and test, in train set, we use half of the images, in test set, we use the other half
-            if split == 'train':
-                self.timestamps = self.timestamps[::2]
-                imgs = imgs[::2]
-                depths = depths[::2]
-                masks = masks[::2]
-            else:
-                self.timestamps = self.timestamps[1::2]
-                imgs = imgs[1::2]
-                depths = depths[1::2]
-                masks = masks[1::2]
+        
+        ### NOTE: we split the dataset into train and test, in train set, we use half of the images, in test set, we use the other half
+        if split == 'train':
+            self.timestamps = self.timestamps[::2]
+            imgs = imgs[::2]
+            depths = depths[::2]
+            masks = masks[::2]
         else:
-            imgs = [i[:500, :, :] for i in imgs]
-            masks = [i[:500, :, :] for i in masks]
-            depths = [i[:500, :, :] for i in depths]
-            intrinsics.height = 500 # this is a fix for the endo dataset
-            
+            self.timestamps = self.timestamps[1::2]
+            imgs = imgs[1::2]
+            depths = depths[1::2]
+            masks = masks[1::2]
 
         imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [
             imgs, masks, depths]]
+        
         # we use near and far to normalize depth
-        self.close_depth = 0
+        self.close_depth = percentile_torch(self.depths, 3)
         self.inf_depth = percentile_torch(self.depths, 99.9)
-        # values larger than inf_depth should be regarded as unreliable, use 0 to replace them
-        self.depths[self.depths > self.inf_depth] = 0
+
+        # values larger than inf_depth should be regarded as unreliable, use self.inf_depth to replace them
+        # values smaller than close_depth should be regarded as unreliable, use self.close_depth to replace them
+        self.depths[self.depths > self.inf_depth] = self.inf_depth
+        self.depths[self.depths < self.close_depth] = self.close_depth
+
         # pre norm depth to be in [0, 1]
         self.depths = (self.depths - self.close_depth) / (self.inf_depth -
-                                                            self.close_depth + torch.finfo(self.depths.dtype).eps)
+                        self.close_depth + torch.finfo(self.depths.dtype).eps)
 
         # generate dummy pose
         self.poses = torch.stack(
-            [torch.eye(4)] * len(paths_img)).float()
+            [torch.eye(4)] * len(self.timestamps)).float()
 
         # bds, torch.Size([1, 2])
         self.per_cam_near_fars = torch.Tensor([[1e-6, 1.]])
@@ -173,11 +183,11 @@ class VideoEndoDataset(BaseDataset):
         self.median_imgs, _ = torch.median(imgs.reshape(
             len(self.timestamps), intrinsics.height, intrinsics.width, 3), dim=0)
         self.median_imgs = self.median_imgs.reshape(
-            1, *self.median_imgs.shape)
+            1, *self.median_imgs.shape) # [N, H, W, 3]
 
         self.mask_weights = self.masks.clone()
         self.mask_weights = torch.Tensor(
-            1.0 - self.mask_weights).to(torch.device("cpu"))
+            1.0 - self.mask_weights).to(self.masks.device)
 
         self.mask_weights = self.mask_weights.reshape(
             len(self.timestamps), intrinsics.height, intrinsics.width)
@@ -187,20 +197,19 @@ class VideoEndoDataset(BaseDataset):
             (1.0 + self.p * self.p_ratio)
         self.mask_weights = self.mask_weights.reshape(
             -1) / torch.sum(self.mask_weights)
-        # self.global_translation = torch.tensor([0, 0, 2.])
-        # self.global_scale = torch.tensor([0.5, 0.6, 1])
-        # Normalize timestamps between -1, 1
 
-
+        # extend the timestamps to the size of imgs
         if split == 'train':
             self.timestamps = self.timestamps[:, None, None].repeat(
                 1, intrinsics.height, intrinsics.width).reshape(-1)  # [n_frames * h * w]
         assert self.timestamps.min() >= - \
             1.0 and self.timestamps.max() <= 1.0, "timestamps out of range."
+        
         if imgs is not None and imgs.dtype != torch.uint8:
             imgs = (imgs * 255).to(torch.uint8)
         if self.median_imgs is not None and self.median_imgs.dtype != torch.uint8:
             self.median_imgs = (self.median_imgs * 255).to(torch.uint8)
+            
         if split == 'train':
             imgs = imgs.view(-1, imgs.shape[-1])
             self.masks = self.masks.view(-1, self.masks.shape[-1])
@@ -321,6 +330,10 @@ class VideoEndoDataset(BaseDataset):
                     log.info(
                         f"Computed {self.ist_weights.shape[0]} IST weights in {t_e - t_s:.2f}s.")
 
+        # NOTE we use dummy isg and ist weights for the debug period
+        self.isg_weights = None
+        self.ist_weights = None
+
         if self.isg:
             self.enable_isg()
         if self.sample_from_masks:
@@ -332,6 +345,8 @@ class VideoEndoDataset(BaseDataset):
                  f"{len(torch.unique(timestamps))} timestamps. Near-far: {self.per_cam_near_fars}. "
                  f"ISG={self.isg}, IST={self.ist}, weights_subsampled={self.weights_subsampled}. "
                  f"Sampling without replacement={self.use_permutation}. {intrinsics}")
+        
+
 
     def enable_isg(self):
         self.isg = True

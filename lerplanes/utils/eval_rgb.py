@@ -94,9 +94,6 @@ class ssim_utils:
 Metrics
 '''
 
-lpips_alex = lpips.LPIPS(net='alex') # best forward scores
-lpips_vgg = lpips.LPIPS(net='vgg') # closer to "traditional" perceptual loss, when used for optimization
-
 def img2mse(x, y, reduction='mean'):
     diff = torch.mean((x - y) ** 2, -1)
     if reduction == 'mean':
@@ -121,20 +118,25 @@ def ssim(img1, img2, window_size = 11, size_average = True, format='NCHW'):
 
     return ssim_utils.ssim(img1, img2, window_size, size_average)
 
-def lpips(img1, img2, net='alex', format='NCHW'):
-    if format == 'HWC':
-        img1 = img1.permute([2, 0, 1])[None, ...]
-        img2 = img2.permute([2, 0, 1])[None, ...]
-    elif format == 'NHWC':
-        img1 = img1.permute([0, 3, 1, 2])
-        img2 = img2.permute([0, 3, 1, 2])
+class lpips_warper:
+    def __init__(self) -> None:
+        self.lpips_alex = lpips.LPIPS(net='alex') # best forward scores
+        self.lpips_vgg = lpips.LPIPS(net='vgg') # closer to "traditional" perceptual loss, when used for optimization
 
-    if net == 'alex':
-        model = lpips_alex.to(img1.device)
-        return model(img1, img2)
-    elif net == 'vgg':
-        model = lpips_vgg.to(img1.device)
-        return model(img1, img2)
+    def forward(self, img1, img2, net='alex', format='NCHW'):
+        if format == 'HWC':
+            img1 = img1.permute([2, 0, 1])[None, ...]
+            img2 = img2.permute([2, 0, 1])[None, ...]
+        elif format == 'NHWC':
+            img1 = img1.permute([0, 3, 1, 2])
+            img2 = img2.permute([0, 3, 1, 2])
+
+        if net == 'alex':
+            model = self.lpips_alex.to(img1.device)
+            return model(img1, img2)
+        elif net == 'vgg':
+            model = self.lpips_vgg.to(img1.device)
+            return model(img1, img2)
 
 def to8b(x):
     return (255*(x-x.min())/(x.max()-x.min())).astype(np.uint8)

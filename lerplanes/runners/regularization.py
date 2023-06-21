@@ -11,6 +11,7 @@ import torch.nn.functional as F
 
 from lerplanes.models.lowrank_model import LowrankModel
 from lerplanes.ops.losses.histogram_loss import interlevel_loss
+from lerplanes.ops.losses.monodepth_loss import ScaleAndShiftInvariantLoss
 from lerplanes.raymarching.ray_samplers import RaySamples
 
 
@@ -293,3 +294,37 @@ class DistortionLoss(Regularizer):
         loss_bi = 2 * (loss_bi_0 - loss_bi_1).sum(dim=-1).mean()
         return loss_bi + loss_uni
 
+
+class MonoDepthLoss(Regularizer):
+    def __init__(self, initial_value, what: str = 'field'):
+        if what not in {'field', 'proposal_network'}:
+            raise ValueError(f'what must be one of "field" or "proposal_network" '
+                             f'but {what} was passed.')
+        name = f'monodepth-{what[:2]}'
+        super().__init__(name, initial_value)
+        self.what = what
+        self.criteria = ScaleAndShiftInvariantLoss(alpha=0)
+
+    def _regularize(self, model: LowrankModel, model_out, **kwargs) -> torch.Tensor:
+        total = 0
+        if self.weight > 0:
+            target_depth = kwargs['data']['depths']
+            # get valid mask
+            valid_mask = target_depth > 0
+            
+            if self.what == 'field':
+                depth = model_out['depth']
+                if depth.shape[0] != 32768:
+                    return torch.tensor(0.0)
+                total += self.criteria(depth.view(2,128,128), target_depth.view(2,128,128), valid_mask.view(2,128,128))
+            elif self.what == 'proposal_network':
+                for i in range(model.num_proposal_iterations):
+                    depth = model_out[f"prop_depth_{i}"]
+                    if depth.shape[0] != 32768:
+                        return torch.tensor(0.0)
+                    total += self.criteria(depth.view(2,128,128), target_depth.view(2,128,128), valid_mask.view(2,128,128))
+            else:
+                raise NotImplementedError(self.what)
+        else:
+            total = torch.tensor(0.0)
+        return total

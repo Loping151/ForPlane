@@ -21,8 +21,9 @@ from lerplanes.runners.regularization import Regularizer
 from lerplanes.ops.lr_scheduling import (
     get_cosine_schedule_with_warmup, get_step_schedule_with_warmup
 )
-from torch.profiler import profile, record_function, ProfilerActivity
-
+# from torch.profiler import profile, record_function, ProfilerActivity
+from utils.eval_rgb import img2mse, mse2psnr, ssim, lpips_warper
+_lpips = lpips_warper()
 class BaseTrainer(abc.ABC):
     def __init__(self,
                  train_data_loader: Iterable,
@@ -174,7 +175,7 @@ class BaseTrainer(abc.ABC):
                 self.post_step(progress_bar=pb)
                 self.timer.check("after-step")
         finally:
-            self.save_model()
+            self.save_model("model.pth")
             pb.close()
             self.writer.close()
 
@@ -211,26 +212,38 @@ class BaseTrainer(abc.ABC):
         ).cpu().reshape(img_h, img_w)[..., None]
 
     def calc_metrics(self, preds: torch.Tensor, gt: torch.Tensor, masks: Optional[torch.Tensor] = None):
-        if masks is None:
-            if gt.shape[-1] == 4:
-                gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
+        # if masks is None:
+        #     if gt.shape[-1] == 4:
+        #         gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
 
-            err = (gt - preds) ** 2
-        else:
-            # mask is not None, we just use mask to avoid invalid pixels
-            if gt.shape[-1] == 4:
-                gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
-            gt = gt * masks
-            preds = preds * masks
+        #     err = (gt - preds) ** 2
+        # else:
+        #     # mask is not None, we just use mask to avoid invalid pixels
+        #     if gt.shape[-1] == 4:
+        #         gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
+        #     gt = gt * masks
+        #     preds = preds * masks
 
-            err = (gt - preds) ** 2
+        #     err = (gt - preds) ** 2
+        gt = gt * masks
+        preds = preds * masks
+        mse = img2mse(preds, gt)
+        psnr = mse2psnr(mse)
+        ssim_ = ssim(preds, gt, format='HWC')
+        lpips_ = _lpips.forward(preds, gt, format='HWC')
+
+        # return {
+        #     "mse": torch.mean(err),
+        #     "psnr": metrics.psnr(preds, gt),
+        #     "ssim": metrics.ssim(preds, gt),
+        #     "ms-ssim": metrics.msssim(preds, gt),
+        #     "alex_lpips": metrics.rgb_lpips(preds, gt, net_name='alex', device=err.device),
+        #     "vgg_lpips": metrics.rgb_lpips(preds, gt, net_name='vgg', device=err.device)
+        # }
         return {
-            "mse": torch.mean(err),
-            "psnr": metrics.psnr(preds, gt),
-            "ssim": metrics.ssim(preds, gt),
-            "ms-ssim": metrics.msssim(preds, gt),
-            "alex_lpips": metrics.rgb_lpips(preds, gt, net_name='alex', device=err.device),
-            "vgg_lpips": metrics.rgb_lpips(preds, gt, net_name='vgg', device=err.device)
+            'psnr': psnr.item(),
+            'ssim': ssim_.item(),
+            'lpips': torch.mean(lpips_).item()
         }
 
     def evaluate_metrics(self,
@@ -276,7 +289,7 @@ class BaseTrainer(abc.ABC):
                 gt = gt[..., :3] * gt[..., 3:] + (1.0 - gt[..., 3:])
 
             # summary.update(self.calc_metrics(preds_rgb.cuda(), gt.cuda(), masks=masks.cuda() if masks is not None else None))
-            # summary.update(self.calc_metrics(preds_rgb, gt, masks=masks))
+            summary.update(self.calc_metrics(preds_rgb.clone(), gt.clone(), masks=masks))
 
             # out_img = torch.cat((out_img, gt), dim=0)
             # out_img = torch.cat((out_img, self._normalize_err(preds_rgb, gt)), dim=0)
@@ -334,8 +347,8 @@ class BaseTrainer(abc.ABC):
             "global_step": self.global_step
         }
 
-    def save_model(self):
-        model_fname = os.path.join(self.log_dir, f'model.pth')
+    def save_model(self, model_name: Optional[str] = None):
+        model_fname = os.path.join(self.log_dir, "step_"+str(self.global_step).zfill(6)+".pth" if model_name is None else model_name)
         log.info(f'Saving model checkpoint to: {model_fname}')
         torch.save(self.get_save_dict(), model_fname)
 

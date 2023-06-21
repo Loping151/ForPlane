@@ -152,7 +152,7 @@ def decide_dset_type(dd) -> str:
         raise RuntimeError(f"data_dir {dd} not recognized as LLFF or Synthetic dataset.")
 
 
-def init_tr_data(data_downsample: float, data_dirs: Sequence[str], **kwargs):
+def init_train_data(data_downsample: float, data_dirs: Sequence[str], **kwargs):
     batch_size = int(kwargs['batch_size'])
     assert len(data_dirs) == 1
     data_dir = data_dirs[0]
@@ -183,7 +183,7 @@ def init_tr_data(data_downsample: float, data_dirs: Sequence[str], **kwargs):
     }
 
 
-def init_ts_data(data_dirs: Sequence[str], split: str, **kwargs):
+def init_test_data(data_dirs: Sequence[str], split: str, **kwargs):
     assert len(data_dirs) == 1
     data_dir = data_dirs[0]
     dset_type = decide_dset_type(data_dir)
@@ -205,9 +205,9 @@ def init_ts_data(data_dirs: Sequence[str], split: str, **kwargs):
 def load_data(data_downsample, data_dirs, validate_only, render_only, **kwargs):
     od: Dict[str, Any] = {}
     if not validate_only:
-        od.update(init_tr_data(data_downsample, data_dirs, **kwargs))
+        od.update(init_train_data(data_downsample, data_dirs, **kwargs))
     else:
         od.update(tr_loader=None, tr_dset=None)
     test_split = 'render' if render_only else 'test'
-    od.update(init_ts_data(data_dirs, split=test_split, **kwargs))
+    od.update(init_test_data(data_dirs, split=test_split, **kwargs))
     return od

@@ -166,6 +166,13 @@ def load_endo_pose_helper(datadir: str, downsample: float, near_scaling: float):
     # intrinsics.focal_x, intrinsics.focal_y = hwf[-1], hwf[-1]
     return intrinsics
 
+def load_hamlyn_intrinsic(datadir: str, W: int=640, H: int=480):
+    intrinsics_matrix = np.loadtxt(os.path.join(datadir, 'intrinsics.txt'))
+    intrinsics = Intrinsics(
+        width=int(W), height=int(H), focal_x=intrinsics_matrix[0,0], focal_y=intrinsics_matrix[1,1], 
+        center_x=intrinsics_matrix[0,2], center_y=intrinsics_matrix[1,2])
+    return intrinsics
+
 def load_llff_poses(datadir: str,
                     downsample: float,
                     split: str,

@@ -8,7 +8,7 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-from lerplanes.datasets.video_datasets import VideoEndoDataset
+from lerplanes.datasets import VideoEndoDataset, VideoHamlynDataset
 from lerplanes.utils.ema import EMA
 from lerplanes.utils.my_tqdm import tqdm
 from lerplanes.ops.image import metrics
@@ -16,12 +16,13 @@ from lerplanes.ops.image.io import write_video_to_file
 from lerplanes.models.lowrank_model import LowrankModel
 from .base_trainer import BaseTrainer, init_dloader_random, initialize_model
 from .regularization import (
-    PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss, DepthLossHuber
+    PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss, DepthLossHuber, MonoDepthLoss
 )
 import cv2
+import imageio
 from torch.profiler import profile, record_function, ProfilerActivity
 import numpy as np
-from utils.eval_rgb import img2mse, mse2psnr, ssim, lpips
+from utils.eval_rgb import img2mse, mse2psnr, ssim, lpips_warper
 
 class VideoTrainer(BaseTrainer):
     def __init__(self,
@@ -45,9 +46,6 @@ class VideoTrainer(BaseTrainer):
         self.ist_step = ist_step
         self.isg_step = isg_step
         self.save_video = save_outputs
-        self.endo = False
-        if kwargs.get('endo', None):
-            self.endo = True
         # Switch to compute extra video metrics (FLIP, JOD)
         self.compute_video_metrics = True # may switch to True
         super().__init__(
@@ -185,10 +183,12 @@ class VideoTrainer(BaseTrainer):
             
         # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         for img_idx, data in tqdm(enumerate(dataset)):
+            # if img_idx > 3:
+            #     break
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
                 data["imgs"], preds, dset=dataset, img_idx=img_idx, name=None,
-                save_outputs=self.save_outputs, out_pred=True)
+                save_outputs=self.save_outputs, out_pred=True, masks=masks[img_idx])
             pred_frames.append(out_img)
             if out_depth is not None:
                 out_depths.append(out_depth)
@@ -196,7 +196,7 @@ class VideoTrainer(BaseTrainer):
                 per_scene_metrics[k].append(v)
             img_list.append(out_pred.clone())
             # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
-            cv2.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), np.array(out_pred))
+            imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx).zfill(6)+'.png'), (np.array(out_pred)*255).astype(np.uint8))
         # with open("output.txt", "w") as f:
         #     f.write(str(prof.key_averages(group_by_stack_n=8).table(sort_by="self_cuda_time_total", row_limit=20,max_name_column_width=1000)))
 
@@ -232,23 +232,32 @@ class VideoTrainer(BaseTrainer):
         df = pd.DataFrame.from_records(val_metrics)
         df.to_csv(os.path.join(self.log_dir, f"test_metrics_step{self.global_step}.csv"))
         # here we save all metrics to a csv file for further analysis
+        per_scene_metrics_avr = {}
+        for key, value in per_scene_metrics.items():
+            try:
+                average = sum(value) / len(value)
+                per_scene_metrics_avr[key] = [average]
+            except Exception:
+                per_scene_metrics_avr[key] = [value]
         save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv")) 
-
-        imgs = np.stack(img_list, axis=0).astype(np.float64)
-        gts = torch.Tensor(gts).to(device) * masks
-        imgs = torch.Tensor(imgs).to(device) * masks
-        print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
-        print('running endo eval')
-        mse = img2mse(imgs, gts)
-        psnr = mse2psnr(mse)
-        ssim_ = ssim(imgs, gts, format='NHWC')
-        lpips_ = lpips(imgs, gts, format='NHWC')
-        print('PSNR:', psnr.item())
-        print('SSIM:', ssim_.item())
-        print('LPIPS:', torch.mean(lpips_).item())
         with open(os.path.join(self.log_dir, 'endo_log.txt'), 'w') as file:
-            file.writelines(('PSNR:', str(psnr.item()), '\n', 'SSIM:', str(ssim_.item()), '\n', 'LPIPS:', str(torch.mean(lpips_).item()), '\n'))
-        print('logging endo eval successful.')
+            file.writelines((str(per_scene_metrics_avr)))
+
+        # _lpips = lpips_warper()
+
+        # imgs = np.stack(img_list, axis=0).astype(np.float64)
+        # gts = torch.Tensor(gts).to(device) * masks
+        # imgs = torch.Tensor(imgs).to(device) * masks
+        # print('Shapes (gt, imgs, masks):', gts.shape, imgs.shape, masks.shape)
+        # print('running endo eval')
+        # mse = img2mse(imgs, gts)
+        # psnr = mse2psnr(mse)
+        # ssim_ = ssim(imgs, gts, format='NHWC')
+        # lpips_ = _lpips.forward(imgs, gts, format='NHWC')
+        # print('PSNR:', psnr.item())
+        # print('SSIM:', ssim_.item())
+        # print('LPIPS:', torch.mean(lpips_).item())
+        # print('logging endo eval successful.')
 
 
     def get_save_dict(self):
@@ -291,6 +300,7 @@ class VideoTrainer(BaseTrainer):
             TimeSmoothness(kwargs.get('time_smoothness_weight', 0.0), what='field'),
             DepthLossHuber(kwargs.get('depth_huber_weight', 0.0), what='field', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
             DistortionLoss(kwargs.get('distortion_loss_weight', 0.0)),
+            MonoDepthLoss(kwargs.get('mono_depth_weight', 0.0), what='field'),
         ]
         if not self.model.use_occ_grid: # proposal network
             losses += [
@@ -299,6 +309,7 @@ class VideoTrainer(BaseTrainer):
                 TimeSmoothness(kwargs.get('time_smoothness_weight_proposal_net', 0.0), what='proposal_network'),
                 DepthLossHuber(kwargs.get('depth_huber_weight_proposal_net', 0.0), what='proposal_network', step_iter=kwargs.get('step_iter', -1)), # temp use 0.2 for huber
                 HistogramLoss(kwargs.get('histogram_loss_weight', 0.0)),
+                MonoDepthLoss(kwargs.get('mono_depth_weight_proposal_net', 0.0), what='proposal_network'),
             ]
         return losses
 
@@ -307,26 +318,48 @@ class VideoTrainer(BaseTrainer):
         return 5
 
 
-def init_tr_data(data_downsample, data_dir, **kwargs):
+def init_train_data(data_downsample, data_dir, **kwargs):
     isg = kwargs.get('isg', False)
     ist = kwargs.get('ist', False)
     keyframes = kwargs.get('keyframes', False)
     batch_size = kwargs['batch_size']
-    log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
-    tr_dset = VideoEndoDataset(
-    data_dir, split='train', downsample=data_downsample,
-    batch_size=batch_size,
-    max_cameras=kwargs.get('max_train_cameras', None),
-    max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
-    isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
-    near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-    scene_bbox=kwargs['scene_bbox'],
-    maskIS = kwargs.get('maskIS', False),
-    sample_from_masks = kwargs.get('sample_from_masks', False),
-    p_ratio = kwargs.get('p_ratio', 1),
-    frequency_ratio = kwargs.get('frequency_ratio', None),
-    bg_color = kwargs.get('bg_color', 1),
-)
+
+    if 'endo' in data_dir or 'hamlyn' in data_dir:
+        log.info(f"Loading VideoEndoDataset with downsample={data_downsample}")
+        tr_dset = VideoEndoDataset(
+        data_dir, split='train', downsample=data_downsample,
+        batch_size=batch_size,
+        max_cameras=kwargs.get('max_train_cameras', None),
+        max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
+        isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
+        near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+        scene_bbox=kwargs['scene_bbox'],
+        maskIS = kwargs.get('maskIS', False),
+        sample_from_masks = kwargs.get('sample_from_masks', False),
+        p_ratio = kwargs.get('p_ratio', 1),
+        frequency_ratio = kwargs.get('frequency_ratio', None),
+        bg_color = kwargs.get('bg_color', 1),
+        depth_type = kwargs.get('depth_type', 'depth'),
+
+        )
+    # elif 'hamlyn' in data_dir:
+    #     log.info(f"Loading VideoHamlynDataset with downsample={data_downsample}")
+    #     tr_dset = VideoHamlynDataset(
+    #     data_dir, split='train', downsample=data_downsample,
+    #     batch_size=batch_size,
+    #     max_cameras=kwargs.get('max_train_cameras', None),
+    #     max_tsteps=kwargs['max_train_tsteps'] if keyframes else None,
+    #     isg=isg, keyframes=keyframes, contraction=kwargs['contract'], ndc=kwargs['ndc'],
+    #     near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+    #     scene_bbox=kwargs['scene_bbox'],
+    #     maskIS = kwargs.get('maskIS', False),
+    #     sample_from_masks = kwargs.get('sample_from_masks', False),
+    #     p_ratio = kwargs.get('p_ratio', 1),
+    #     frequency_ratio = kwargs.get('frequency_ratio', None),
+    #     bg_color = kwargs.get('bg_color', 1),
+    #     )
+    else:
+        raise NotImplementedError
 
     if ist:
         tr_dset.switch_isg2ist()  # this should only happen in case we're reloading
@@ -339,23 +372,41 @@ def init_tr_data(data_downsample, data_dir, **kwargs):
     return {"tr_loader": tr_loader, "tr_dset": tr_dset}
 
 
-def init_ts_data(data_dir, split, **kwargs):
-    if 'dnerf' or 'endo' in data_dir:
+def init_test_data(data_dir, split, **kwargs):
+    if 'dnerf' or 'endo' or 'hamlyn' in data_dir:
         downsample = 1.0
     else:
         downsample = 2.0
-    ts_dset = VideoEndoDataset(
-        data_dir, split=split, downsample=downsample,
-        max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
-        contraction=kwargs['contract'], ndc=kwargs['ndc'],
-        near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
-        scene_bbox=kwargs['scene_bbox'],
-        maskIS = kwargs.get('maskIS', False),
-        sample_from_masks = kwargs.get('sample_from_masks', False),
-        p_ratio = kwargs.get('p_ratio', 1),
-        frequency_ratio = kwargs.get('frequency_ratio', None),
-        bg_color = kwargs.get('bg_color', 1),
-    )
+
+    if 'endo' in data_dir or 'hamlyn' in data_dir:
+        ts_dset = VideoEndoDataset(
+            data_dir, split=split, downsample=downsample,
+            max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
+            contraction=kwargs['contract'], ndc=kwargs['ndc'],
+            near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+            scene_bbox=kwargs['scene_bbox'],
+            maskIS = kwargs.get('maskIS', False),
+            sample_from_masks = kwargs.get('sample_from_masks', False),
+            p_ratio = kwargs.get('p_ratio', 1),
+            frequency_ratio = kwargs.get('frequency_ratio', None),
+            bg_color = kwargs.get('bg_color', 1),
+            depth_type = kwargs.get('depth_type', 'depth'),
+        )
+    # elif 'hamlyn' in data_dir:
+    #     ts_dset = VideoHamlynDataset(
+    #         data_dir, split=split, downsample=downsample,
+    #         max_cameras=kwargs.get('max_test_cameras', None), max_tsteps=kwargs.get('max_test_tsteps', None),
+    #         contraction=kwargs['contract'], ndc=kwargs['ndc'],
+    #         near_scaling=float(kwargs.get('near_scaling', 0)), ndc_far=float(kwargs.get('ndc_far', 0)),
+    #         scene_bbox=kwargs['scene_bbox'],
+    #         maskIS = kwargs.get('maskIS', False),
+    #         sample_from_masks = kwargs.get('sample_from_masks', False),
+    #         p_ratio = kwargs.get('p_ratio', 1),
+    #         frequency_ratio = kwargs.get('frequency_ratio', None),
+    #         bg_color = kwargs.get('bg_color', 1),
+    #     )
+    else:
+        raise NotImplementedError
 
     return {"ts_dset": ts_dset}
 
@@ -364,11 +415,11 @@ def load_data(data_downsample, data_dirs, validate_only, render_only, **kwargs):
     assert len(data_dirs) == 1
     od: Dict[str, Any] = {}
     if not validate_only and not render_only:
-        od.update(init_tr_data(data_downsample, data_dirs[0], **kwargs))
+        od.update(init_train_data(data_downsample, data_dirs[0], **kwargs))
     else:
         od.update(tr_loader=None, tr_dset=None)
     test_split = 'render' if render_only else 'test'
-    od.update(init_ts_data(data_dirs[0], split=test_split, **kwargs))
+    od.update(init_test_data(data_dirs[0], split=test_split, **kwargs))
     return od
 
 

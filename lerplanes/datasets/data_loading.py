@@ -198,6 +198,14 @@ def parallel_load_endo_mask(tqdm_title: str, num_images: int, **kwargs) -> Tuple
         max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
+def parallel_load_depth(data_type:str, **kwargs):
+    if data_type == 'endo':
+        return parallel_load_endo_depth(**kwargs)
+    elif data_type == 'hamlyn':
+        return parallel_load_hamlyn_depth(**kwargs)
+    else:
+        raise NotImplementedError
+
 
 def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
     max_threads = maxT
@@ -206,6 +214,35 @@ def parallel_load_endo_depth(tqdm_title: str, num_images: int, **kwargs) -> Tupl
         max_threads, num_images, fn, tqdm_title, **kwargs)
     return outputs
 
+### load hamlyn
+def parallel_load_hamlyn_depth(tqdm_title: str, num_images: int, **kwargs) -> Tuple[List[Any], List[Any]]:
+    max_threads = maxT
+    fn = _parallel_loader_hamlyn_depth_image
+    outputs = parallel_load_images_wrappers(
+        max_threads, num_images, fn, tqdm_title, **kwargs)
+    return outputs
+
+def _parallel_loader_hamlyn_depth_image(args):
+    torch.set_num_threads(maxT)
+    return _load_endo_depth_image(**args)
+
+# def _load_hamlyn_depth_image(idx: int,
+#                            paths: List[str],
+#                            data_dir: str,
+#                            out_h: int,
+#                            out_w: int,
+#                            ) -> torch.Tensor:
+#     f_path = paths[idx]
+#     # load pred_depth, all values are integers
+#     disp = (imageio.imread(f_path, ignoregamma=True)/100.).astype(np.float32)
+    
+#     if disp.shape[0] != out_h or disp.shape[1] != out_w:
+#         # use lanczos to resize
+#         disp = disp.resize((out_w, out_h), Image.LANCZOS)
+#     # use torch.from_numpy to convert to tensor
+#     disp = torch.from_numpy(disp).float().unsqueeze(-1)
+#     depth = 1./disp
+#     return depth
 
 def parallel_load_images(tqdm_title,
                          dset_type: str,

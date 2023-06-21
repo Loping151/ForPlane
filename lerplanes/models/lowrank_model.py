@@ -33,8 +33,8 @@ class LowrankModel(nn.Module):
                  global_translation: Optional[torch.Tensor] = None,
                  global_scale: Optional[torch.Tensor] = None,
                  # occ-sampling arguments
-                 occ_grid_reso: int = 256,  # -1 to disable
-                 occ_step_size: float = 8e-3,
+                 occ_grid_reso: int = -1,  # -1 to disable
+                 occ_step_size: float = 1e-2,
                  occ_alpha_thres: float = 0.0,
                  # proposal-sampling arguments
                  num_proposal_iterations: int = 1,

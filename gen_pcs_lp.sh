@@ -1,19 +1,16 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
-# python generate_pointclouds.py --root_path logs/additional/tr_90_bg/estm \
-#                                         --out_postfix lp_recon \
-#                                         --data_type traction \
-#                                         --depth_smoother
+100-600
+600-1100
+1100-1600
+1600-2100
+2100-2600
+2900-3400
+3400-3900
 
-python generate_pointclouds.py --root_path logs/additional/tr_100_bg/estm \
-<<<<<<< HEAD
-=======
-python generate_pointclouds.py --root_path logs/additional/tr_50_bg/estm \
->>>>>>> 7b47ab7f3206d9ec6e484f2424448b04149fba99
-=======
->>>>>>> b26eda0cef18828bb6d35a349459deb84f752fbb
-                                        --out_postfix lp_recon \
-                                        --data_type traction \
-                                        --depth_smoother
+Make dataset
+seq1: 100-600 -----> 200-500
+seq2: 600-1100 -> 700-1000
+seq3: 1100-1600 -> 1200-1500
+seq4: 1600-2100 -> 1700-2000
+seq5: 2100-2600 -> 2200-2500
+seq6: 2900-3400 -> 3000-3300
+seq7: 3400-3900 -> 3500-3800
