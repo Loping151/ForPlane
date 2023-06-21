@@ -37,7 +37,7 @@ class LowrankModel(nn.Module):
                  occ_grid_reso: int = -1,  # -1 to disable [64, 128, 256]
                  occ_step_size: float = 1e-2, # [4e-3, 1e-3, 1e-4, 1e-2]
                  occ_level: int = 1, # [1, 2]
-                 occ_alpha_thres: float = 0.0, # [1e-2, 1e-3, 1e-4]
+                 occ_alpha_thres: float = 0.0, # [0, 1e-2, 1e-3, 1e-4]
                  # proposal-sampling arguments
                  num_proposal_iterations: int = 1,
                  use_same_proposal_network: bool = False,
@@ -154,9 +154,6 @@ class LowrankModel(nn.Module):
                 initial_sampler=initial_sampler
             )
         
-
-
-
     def step_before_iter(self, step):
         if self.use_occ_grid and self.training:
             def occ_eval_fn(x):
@@ -359,16 +356,27 @@ class LowrankModel(nn.Module):
         return outputs
 
     def get_params(self, lr: float):
-        model_params = self.field.get_params()
-        pn_params = [pn.get_params() for pn in self.proposal_networks]
-        field_params = model_params["field"] + \
-            [p for pnp in pn_params for p in pnp["field"]]
-        nn_params = model_params["nn"] + \
-            [p for pnp in pn_params for p in pnp["nn"]]
-        other_params = model_params["other"] + \
-            [p for pnp in pn_params for p in pnp["other"]]
-        return [
-            {"params": field_params, "lr": lr},
-            {"params": nn_params, "lr": lr},
-            {"params": other_params, "lr": lr},
-        ]
+        if not self.use_occ_grid:
+            model_params = self.field.get_params()
+            pn_params = [pn.get_params() for pn in self.proposal_networks]
+            field_params = model_params["field"] + \
+                [p for pnp in pn_params for p in pnp["field"]]
+            nn_params = model_params["nn"] + \
+                [p for pnp in pn_params for p in pnp["nn"]]
+            other_params = model_params["other"] + \
+                [p for pnp in pn_params for p in pnp["other"]]
+            return [
+                {"params": field_params, "lr": lr},
+                {"params": nn_params, "lr": lr},
+                {"params": other_params, "lr": lr},
+            ]
+        else:
+            model_params = self.field.get_params()
+            field_params = model_params["field"]
+            nn_params = model_params["nn"]
+            other_params = model_params["other"]
+            return [
+                {"params": field_params, "lr": lr},
+                {"params": nn_params, "lr": lr},
+                {"params": other_params, "lr": lr},
+            ]
