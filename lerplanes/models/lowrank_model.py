@@ -134,25 +134,28 @@ class LowrankModel(nn.Module):
                 self.density_fns.extend(
                     [network.get_density for network in self.proposal_networks])
 
-        def update_schedule(step): return np.clip(
-            np.interp(step, [0, self.proposal_warmup],
-                      [0, self.proposal_update_every]),
-            1,
-            self.proposal_update_every,
-        )
-        if self.is_contracted or self.is_ndc:
-            initial_sampler = UniformLinDispPiecewiseSampler(
-                single_jitter=single_jitter)
-        else:
-            initial_sampler = UniformSampler(single_jitter=single_jitter)
-        self.proposal_sampler = ProposalNetworkSampler(
-            num_nerf_samples_per_ray=num_samples,
-            num_proposal_samples_per_ray=num_proposal_samples,
-            num_proposal_network_iterations=self.num_proposal_iterations,
-            single_jitter=single_jitter,
-            update_sched=update_schedule,
-            initial_sampler=initial_sampler
-        )
+            def update_schedule(step): return np.clip(
+                np.interp(step, [0, self.proposal_warmup],
+                        [0, self.proposal_update_every]),
+                1,
+                self.proposal_update_every,
+            )
+            if self.is_contracted or self.is_ndc:
+                initial_sampler = UniformLinDispPiecewiseSampler(
+                    single_jitter=single_jitter)
+            else:
+                initial_sampler = UniformSampler(single_jitter=single_jitter)
+            self.proposal_sampler = ProposalNetworkSampler(
+                num_nerf_samples_per_ray=num_samples,
+                num_proposal_samples_per_ray=num_proposal_samples,
+                num_proposal_network_iterations=self.num_proposal_iterations,
+                single_jitter=single_jitter,
+                update_sched=update_schedule,
+                initial_sampler=initial_sampler
+            )
+        
+
+
 
     def step_before_iter(self, step):
         if self.use_occ_grid and self.training:

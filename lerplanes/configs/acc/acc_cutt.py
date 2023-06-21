@@ -2,7 +2,7 @@ config = {
     'description': '',
 
     'expname': 'acc_cutt',
-    'logdir': './logs/standard',
+    'logdir': './logs/acc',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
