@@ -120,6 +120,9 @@ def main():
     config.update(overrides_dict)
     config['batch_size'] = int(config['batch_size'])
     config['num_steps'] = int(config['num_steps'])
+    config['occ_alpha_thres'] = float(config['occ_alpha_thres'])
+    config['occ_level'] = int(config['occ_level'])
+    config['occ_grid_reso'] = float(config['occ_grid_reso'])
     validate_only = args.validate_only
     render_only = args.render_only
     spacetime_only = args.spacetime_only

@@ -314,15 +314,17 @@ class MonoDepthLoss(Regularizer):
             
             if self.what == 'field':
                 depth = model_out['depth']
-                if depth.shape[0] != 32768:
+                if depth.shape[0] % (128*128) != 0:
+                    print('Warning: MonodepthLoss failed')
                     return torch.tensor(0.0)
-                total += self.criteria(depth.view(2,128,128), target_depth.view(2,128,128), valid_mask.view(2,128,128))
+                total += self.criteria(depth.view(-1,128,128), target_depth.view(2,128,128), valid_mask.view(-1,128,128))
             elif self.what == 'proposal_network':
                 for i in range(model.num_proposal_iterations):
                     depth = model_out[f"prop_depth_{i}"]
-                    if depth.shape[0] != 32768:
+                    if depth.shape[0] % (128*128) != 0:
+                        print('Warning: MonodepthLoss failed')
                         return torch.tensor(0.0)
-                    total += self.criteria(depth.view(2,128,128), target_depth.view(2,128,128), valid_mask.view(2,128,128))
+                    total += self.criteria(depth.view(-1,128,128), target_depth.view(-1,128,128), valid_mask.view(-1,128,128))
             else:
                 raise NotImplementedError(self.what)
         else:
