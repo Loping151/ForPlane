@@ -40,7 +40,8 @@ def get_freer_gpu():
     return None
 
 
-gpu = get_freer_gpu()
+# gpu = get_freer_gpu()
+gpu = None
 if gpu is not None:
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     print(f"CUDA_VISIBLE_DEVICES set to {gpu}")

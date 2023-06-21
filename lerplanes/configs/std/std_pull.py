@@ -1,7 +1,7 @@
 config = {
     'description': '',
 
-    'expname': 'std_pull',
+    'expname': 'std_pull1',
     'logdir': './logs/standard',
     'device': 'cuda:0',
 
@@ -55,7 +55,7 @@ config = {
     'num_samples': 64,
     'num_proposal_iterations': 2,
     'num_proposal_samples': [256, 128],
-    'use_same_proposal_network': True,
+    'use_same_proposal_network': False,
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,

@@ -1,7 +1,7 @@
 config = {
     'description': '',
 
-    'expname': 'std_trac',
+    'expname': 'std_trac1',
     'logdir': './logs/standard',
     'device': 'cuda:0',
 

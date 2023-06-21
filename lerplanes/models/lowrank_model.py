@@ -1,5 +1,6 @@
-from typing import List, Sequence, Optional, Union, Dict, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
+import nerfacc
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,13 +8,13 @@ import torch.nn as nn
 from lerplanes.models.density_fields import KPlaneDensityField
 from lerplanes.models.kplane_field import KPlaneField
 from lerplanes.ops.activations import init_density_activation
-from lerplanes.raymarching.ray_samplers import (
-    UniformLinDispPiecewiseSampler, UniformSampler,
-    ProposalNetworkSampler, RayBundle, RaySamples
-)
-from lerplanes.raymarching.spatial_distortions import SceneContraction, SpatialDistortion
+from lerplanes.raymarching.ray_samplers import (ProposalNetworkSampler,
+                                                RayBundle, RaySamples,
+                                                UniformLinDispPiecewiseSampler,
+                                                UniformSampler)
+from lerplanes.raymarching.spatial_distortions import (SceneContraction,
+                                                       SpatialDistortion)
 from lerplanes.utils.timer import CudaTimer
-import nerfacc
 
 
 class LowrankModel(nn.Module):
@@ -33,9 +34,10 @@ class LowrankModel(nn.Module):
                  global_translation: Optional[torch.Tensor] = None,
                  global_scale: Optional[torch.Tensor] = None,
                  # occ-sampling arguments
-                 occ_grid_reso: int = -1,  # -1 to disable
-                 occ_step_size: float = 1e-2,
-                 occ_alpha_thres: float = 0.0,
+                 occ_grid_reso: int = -1,  # -1 to disable [64, 128, 256]
+                 occ_step_size: float = 1e-2, # [4e-3, 1e-3, 1e-4, 1e-2]
+                 occ_level: int = 1, # [1, 2]
+                 occ_alpha_thres: float = 0.0, # [1e-2, 1e-3, 1e-4]
                  # proposal-sampling arguments
                  num_proposal_iterations: int = 1,
                  use_same_proposal_network: bool = False,
@@ -93,9 +95,11 @@ class LowrankModel(nn.Module):
         self.occ_grid = None
         self.occ_step_size = float(occ_step_size)
         self.occ_alpha_thres = float(occ_alpha_thres)
-        if self.use_occ_grid > 0:
+        # we use aabb nerfacc for this task. the resolution may differ
+        if self.use_occ_grid > 0: 
             self.occupancy_grid = nerfacc.OccGridEstimator(
-                roi_aabb=aabb.reshape(-1), resolution=self.occ_grid_reso
+                roi_aabb=aabb.reshape(-1), resolution=self.occ_grid_reso, 
+                levels=occ_level
             )
 
         # Initialize proposal-sampling nets
@@ -289,6 +293,7 @@ class LowrankModel(nn.Module):
                 render_step_size=self.occ_step_size,
                 stratified=self.training,
                 alpha_thre=self.occ_alpha_thres,
+                early_stop_eps=1e-4,
             )
             rgb, accumulation, depth, _ = nerfacc.rendering(
                 t_starts,
