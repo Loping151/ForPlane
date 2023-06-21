@@ -150,6 +150,7 @@ class VideoEndoDataset(BaseDataset):
             masks = [i[:500, :, :] for i in masks]
             depths = [i[:500, :, :] for i in depths]
             intrinsics.height = 500 # this is a fix for the endo dataset
+            intrinsics.center_y = intrinsics.center_y - 6
             
 
         imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [
