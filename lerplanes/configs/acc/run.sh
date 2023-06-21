@@ -1,20 +1,24 @@
-3 0
+
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0000' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0001' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0002' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-4'
+PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0003' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='0'
 
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0010' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0011' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0012' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-4'
-3 1
+PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0013' 'occ_grid_reso'='64' 'occ_step_size'='4e-3' 'occ_level'='2' 'occ_alpha_thres'='0'
+
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0100' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0101' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0102' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-4'
+PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0103' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='1' 'occ_alpha_thres'='0'
 
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0110' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0111' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0112' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='2' 'occ_alpha_thres'='1e-4'
-3 2
+PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0113' 'occ_grid_reso'='64' 'occ_step_size'='1e-3' 'occ_level'='2' 'occ_alpha_thres'='0'
+
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0200' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='1' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0201' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='1' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0202' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='1' 'occ_alpha_thres'='1e-4'
@@ -22,7 +26,7 @@ PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kpla
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0210' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='2' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0211' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='2' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0212' 'occ_grid_reso'='64' 'occ_step_size'='1e-4' 'occ_level'='2' 'occ_alpha_thres'='1e-4'
-3 3
+
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0300' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='1' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0301' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='1' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0302' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='1' 'occ_alpha_thres'='1e-4'
@@ -30,7 +34,7 @@ PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kpla
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0310' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='2' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0311' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='2' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='0312' 'occ_grid_reso'='64' 'occ_step_size'='1e-2' 'occ_level'='2' 'occ_alpha_thres'='1e-4'
-end
+
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='1000' 'occ_grid_reso'='128' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-2'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='1001' 'occ_grid_reso'='128' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-3'
 PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/acc/acc_cutt.py 'expname'='1002' 'occ_grid_reso'='128' 'occ_step_size'='4e-3' 'occ_level'='1' 'occ_alpha_thres'='1e-4'
