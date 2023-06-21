@@ -122,7 +122,8 @@ def main():
     config['num_steps'] = int(config['num_steps'])
     config['occ_alpha_thres'] = float(config['occ_alpha_thres'])
     config['occ_level'] = int(config['occ_level'])
-    config['occ_grid_reso'] = float(config['occ_grid_reso'])
+    config['occ_grid_reso'] = int(config['occ_grid_reso'])
+    config['occ_step_size'] = float(config['occ_step_size'])
     validate_only = args.validate_only
     render_only = args.render_only
     spacetime_only = args.spacetime_only
