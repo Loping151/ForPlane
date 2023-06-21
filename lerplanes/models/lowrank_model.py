@@ -101,38 +101,38 @@ class LowrankModel(nn.Module):
                 roi_aabb=aabb.reshape(-1), resolution=self.occ_grid_reso, 
                 levels=occ_level
             )
-
-        # Initialize proposal-sampling nets
-        self.density_fns = []
-        self.num_proposal_iterations = num_proposal_iterations
-        self.proposal_net_args_list = proposal_net_args_list
-        self.proposal_warmup = proposal_warmup
-        self.proposal_update_every = proposal_update_every
-        self.use_proposal_weight_anneal = use_proposal_weight_anneal
-        self.proposal_weights_anneal_max_num_iters = proposal_weights_anneal_max_num_iters
-        self.proposal_weights_anneal_slope = proposal_weights_anneal_slope
-        self.proposal_networks = torch.nn.ModuleList()
-        if use_same_proposal_network:
-            assert len(
-                self.proposal_net_args_list) == 1, "Only one proposal network is allowed."
-            prop_net_args = self.proposal_net_args_list[0]
-            network = KPlaneDensityField(
-                aabb, spatial_distortion=self.spatial_distortion,
-                density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args)
-            self.proposal_networks.append(network)
-            self.density_fns.extend(
-                [network.get_density for _ in range(self.num_proposal_iterations)])
         else:
-            for i in range(self.num_proposal_iterations):
-                prop_net_args = self.proposal_net_args_list[min(
-                    i, len(self.proposal_net_args_list) - 1)]
+            # Initialize proposal-sampling nets
+            self.density_fns = []
+            self.num_proposal_iterations = num_proposal_iterations
+            self.proposal_net_args_list = proposal_net_args_list
+            self.proposal_warmup = proposal_warmup
+            self.proposal_update_every = proposal_update_every
+            self.use_proposal_weight_anneal = use_proposal_weight_anneal
+            self.proposal_weights_anneal_max_num_iters = proposal_weights_anneal_max_num_iters
+            self.proposal_weights_anneal_slope = proposal_weights_anneal_slope
+            self.proposal_networks = torch.nn.ModuleList()
+            if use_same_proposal_network:
+                assert len(
+                    self.proposal_net_args_list) == 1, "Only one proposal network is allowed."
+                prop_net_args = self.proposal_net_args_list[0]
                 network = KPlaneDensityField(
                     aabb, spatial_distortion=self.spatial_distortion,
-                    density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args,
-                )
+                    density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args)
                 self.proposal_networks.append(network)
-            self.density_fns.extend(
-                [network.get_density for network in self.proposal_networks])
+                self.density_fns.extend(
+                    [network.get_density for _ in range(self.num_proposal_iterations)])
+            else:
+                for i in range(self.num_proposal_iterations):
+                    prop_net_args = self.proposal_net_args_list[min(
+                        i, len(self.proposal_net_args_list) - 1)]
+                    network = KPlaneDensityField(
+                        aabb, spatial_distortion=self.spatial_distortion,
+                        density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args,
+                    )
+                    self.proposal_networks.append(network)
+                self.density_fns.extend(
+                    [network.get_density for network in self.proposal_networks])
 
         def update_schedule(step): return np.clip(
             np.interp(step, [0, self.proposal_warmup],
