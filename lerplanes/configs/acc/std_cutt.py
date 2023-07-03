@@ -1,18 +1,18 @@
 config = {
     'description': '',
 
-    'expname': 'acc_cutt',
-    'logdir': './logs/acc',
+    'expname': 'std_cutt1',
+    'logdir': './logs/standard',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
     'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
     'contract': False,
     'ndc': True,
-    'ndc_far': 1.2,
+    'ndc_far': 2.0,
     'isg': True,
     'isg_step': 0,
-    'ist_step': 180*2,
+    'ist_step': 180,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'maskIS': True,
@@ -21,18 +21,13 @@ config = {
     'bg_color': 0,
     'depth_type': 'depth',
     # Optimization settings
-    'num_steps': 1800*2,
-    'batch_size': 32768//2,
+    'num_steps': 1800,
+    'batch_size': 32768,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
     'lr': 0.01,
     "eval_batch_size": 65536,
 
-    # acc
-    'occ_grid_reso': 64,
-    'occ_step_size': 4e-3,
-    'occ_level': 1,
-    'occ_alpha_thres': 1e-2,
     # Regularization
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
     'distortion_loss_weight': 0.0,
@@ -47,11 +42,11 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 900*2,
+    'step_iter': 900,
 
-    # Training settings, since we valid after train, just disable valid
-    'valid_every': 100000, 
-    'save_every': 1800*2,
+    # Training settings
+    'valid_every': 1800,
+    'save_every': 1800,
     'save_outputs': True,
     'train_fp16': True,
 

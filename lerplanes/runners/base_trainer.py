@@ -302,7 +302,9 @@ class BaseTrainer(abc.ABC):
         out_img_np: np.ndarray = (out_img * 255.0).byte().numpy()
         out_depth_np: Optional[np.ndarray] = None
         if out_depth is not None:
-            out_depth = self._normalize_01(out_depth)
+            # out_depth = self._normalize_01(out_depth)
+            # since the depth is alreay [0, 1], just clip
+            out_depth = out_depth.clamp(0., 1.)
             out_depth_np = (out_depth * 255.0).repeat(1, 1, 3).byte().numpy()
 
         if save_outputs:
@@ -314,6 +316,10 @@ class BaseTrainer(abc.ABC):
                 depth_name = out_name + "-depth"
                 write_png(os.path.join(self.log_dir,
                         depth_name + ".png"), out_depth_np)
+
+        # simple check for acc
+        if preds['accumulation'].min() < 0.9:
+            print(f"warning, the accumulation is less than 0.9, cur is {preds['accumulation'].min()}, may incur wrong depth")
 
         if out_pred:
             return summary, out_img_np, out_depth_np, preds_rgb

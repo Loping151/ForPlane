@@ -1,15 +1,15 @@
 config = {
     'description': '',
 
-    'expname': 'acc_cutt',
-    'logdir': './logs/acc',
+    'expname': 'acc_trac',
+    'logdir': './logs/acc_trac',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/traction'],
     'contract': False,
     'ndc': True,
-    'ndc_far': 1.2,
+    'ndc_far': 2.0,
     'isg': True,
     'isg_step': 0,
     'ist_step': 180*2,
@@ -49,8 +49,8 @@ config = {
     'depth_huber_weight_proposal_net': 0.05,
     'step_iter': 900*2,
 
-    # Training settings, since we valid after train, just disable valid
-    'valid_every': 100000, 
+    # Training settings
+    'valid_every': 100000,
     'save_every': 1800*2,
     'save_outputs': True,
     'train_fp16': True,
@@ -60,11 +60,11 @@ config = {
     'num_samples': 64,
     'num_proposal_iterations': 2,
     'num_proposal_samples': [256, 128],
-    'use_same_proposal_network': False,
+    'use_same_proposal_network': True,
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 156]}
+            'resolution': [128, 128, 128, 71]}
         #     ,
         # {'num_input_coords': 4, 'num_output_coords': 8,
         #     'resolution': [256, 256, 256, 156]}
@@ -82,7 +82,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 156]
+            'resolution': [64, 64, 64, 71]
         },
         {
             'encoder_type': 'OneBlob',

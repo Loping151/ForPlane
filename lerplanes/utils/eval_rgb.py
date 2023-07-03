@@ -5,12 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
-import math
 from math import exp
 import random, time
 import imageio
 import lpips
 import warnings
+import cv2
 # just used for ignore annoying warming.
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -18,6 +18,11 @@ warnings.filterwarnings("ignore", category=UserWarning)
 '''
 SSIM utils
 '''
+
+def depth2rgb(depth):
+    # depth is normed in [0, 1], turn to colormap magama
+    depth = cv2.applyColorMap(depth.astype(np.uint8), cv2.COLORMAP_MAGMA)
+    return depth
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])

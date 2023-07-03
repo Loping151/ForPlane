@@ -1,8 +1,8 @@
 config = {
-    'description': '',
+    'description': 'iter32k',
 
-    'expname': 'acc_cutt',
-    'logdir': './logs/acc',
+    'expname': 'cutt',
+    'logdir': './exps/iter32k_gtdp',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -19,7 +19,7 @@ config = {
     'frequency_ratio': 1,
     'near_scaling': 0.95,
     'bg_color': 0,
-    'depth_type': 'depth',
+    'depth_type': 'gt_depth',
     # Optimization settings
     'num_steps': 1800*2,
     'batch_size': 32768//2,
@@ -31,7 +31,7 @@ config = {
     # acc
     'occ_grid_reso': 64,
     'occ_step_size': 4e-3,
-    'occ_level': 1,
+    'occ_level': 2,
     'occ_alpha_thres': 1e-2,
     # Regularization
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]

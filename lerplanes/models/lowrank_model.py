@@ -92,7 +92,6 @@ class LowrankModel(nn.Module):
 
         self.occ_grid_reso = int(occ_grid_reso)
         self.use_occ_grid = self.occ_grid_reso > 0
-        self.occ_grid = None
         self.occ_step_size = float(occ_step_size)
         self.occ_alpha_thres = float(occ_alpha_thres)
         # we use aabb nerfacc for this task. the resolution may differ
@@ -196,8 +195,11 @@ class LowrankModel(nn.Module):
     def render_depth(weights: torch.Tensor, ray_samples: RaySamples, rays_d: torch.Tensor):
         steps = (ray_samples.starts + ray_samples.ends) / 2
         one_minus_transmittance = torch.sum(weights, dim=-2)
-        depth = torch.sum(weights * steps, dim=-2) + \
-            one_minus_transmittance * rays_d[..., -1:]
+        # this supply leads to acc < 1
+        # depth = torch.sum(weights * steps, dim=-2) + \
+        #     one_minus_transmittance * rays_d[..., -1:]
+        # use another test
+        depth = torch.sum(weights * steps, dim=-2)
         return depth
 
     @staticmethod

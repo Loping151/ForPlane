@@ -179,27 +179,30 @@ class VideoTrainer(BaseTrainer):
         # indexex = []
         logdir = self.log_dir
         if not os.path.exists(os.path.join(logdir, 'estm')):
-            os.mkdir(os.path.join(logdir, 'estm'))
+            os.makedirs(os.path.join(logdir, 'estm', 'rgb'), exist_ok=True)
+            os.makedirs(os.path.join(logdir, 'estm', 'depth'), exist_ok=True)
             
         # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         for img_idx, data in tqdm(enumerate(dataset)):
-            # if img_idx > 3:
-            #     break
+
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
                 data["imgs"], preds, dset=dataset, img_idx=img_idx, name=None,
                 save_outputs=self.save_outputs, out_pred=True, masks=masks[img_idx])
             pred_frames.append(out_img)
             if out_depth is not None:
-                out_depths.append(out_depth)
+                color_depth = cv2.applyColorMap((out_depth[...,0]).astype(np.uint8), cv2.COLORMAP_JET)
+                out_depths.append(color_depth)
             for k, v in out_metrics.items():
                 per_scene_metrics[k].append(v)
             img_list.append(out_pred.clone())
-            # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
-            imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx).zfill(6)+'.png'), (np.array(out_pred)*255).astype(np.uint8))
-        # with open("output.txt", "w") as f:
-        #     f.write(str(prof.key_averages(group_by_stack_n=8).table(sort_by="self_cuda_time_total", row_limit=20,max_name_column_width=1000)))
 
+            # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
+            # save rgb and depth
+            cv2.imwrite(os.path.join(logdir, 'estm', 'rgb', str(img_idx).zfill(6)+'.png'),
+                        cv2.cvtColor((np.array(out_pred)*255).astype(np.uint8), cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(logdir, 'estm', 'depth', str(img_idx).zfill(6)+'.png'),
+                        (out_depth[...,0]).astype(np.uint8))
 
         if self.save_video:
             write_video_to_file(

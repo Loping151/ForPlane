@@ -1,27 +1,27 @@
 config = {
-    'description': '',
+    'description': 'iter9k',
 
-    'expname': 'acc_cutt',
-    'logdir': './logs/acc',
+    'expname': 'push',
+    'logdir': './exps/iter9k_gtdp',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/pushing_tissues'],
     'contract': False,
     'ndc': True,
     'ndc_far': 1.2,
     'isg': True,
     'isg_step': 0,
-    'ist_step': 180*2,
+    'ist_step': 60*2,
     'keyframes': False,
     'scene_bbox': [[-1.0, -1.0, -1.0], [1.0, 1.0, 0.1]],
     'maskIS': True,
     'frequency_ratio': 1,
     'near_scaling': 0.95,
     'bg_color': 0,
-    'depth_type': 'depth',
+    'depth_type': 'gt_depth',
     # Optimization settings
-    'num_steps': 1800*2,
+    'num_steps': 600*2,
     'batch_size': 32768//2,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
@@ -31,7 +31,7 @@ config = {
     # acc
     'occ_grid_reso': 64,
     'occ_step_size': 4e-3,
-    'occ_level': 1,
+    'occ_level': 2,
     'occ_alpha_thres': 1e-2,
     # Regularization
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
@@ -47,10 +47,10 @@ config = {
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.05,
     'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 900*2,
+    'step_iter': 600,
 
-    # Training settings, since we valid after train, just disable valid
-    'valid_every': 100000, 
+    # Training settings
+    'valid_every': 100000,
     'save_every': 1800*2,
     'save_outputs': True,
     'train_fp16': True,
@@ -64,7 +64,7 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 156]}
+            'resolution': [128, 128, 128, 136]}
         #     ,
         # {'num_input_coords': 4, 'num_output_coords': 8,
         #     'resolution': [256, 256, 256, 156]}
@@ -82,7 +82,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 156]
+            'resolution': [64, 64, 64, 136]
         },
         {
             'encoder_type': 'OneBlob',

@@ -19,3 +19,8 @@ __pycache__/
 plenoxels/*
 
 *.txt
+
+exps
+
+lerplanes/configs/endonerf/adjust_params
+

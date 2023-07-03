@@ -14,8 +14,8 @@ from lerplanes.ops.losses.histogram_loss import interlevel_loss
 from lerplanes.ops.losses.monodepth_loss import ScaleAndShiftInvariantLoss
 from lerplanes.raymarching.ray_samplers import RaySamples
 
-
-def compute_plane_tv(t):
+@torch.jit.script
+def compute_plane_tv(t: torch.Tensor):
     batch_size, c, h, w = t.shape
     count_h = batch_size * c * (h - 1) * w
     count_w = batch_size * c * h * (w - 1)
@@ -199,7 +199,7 @@ class DepthTV(Regularizer):
         return tv
 
 class DepthLossHuber(Regularizer):
-    def __init__(self, initial_value, what: str = 'field', step_iter=-1, delta: float=0.2):
+    def __init__(self, initial_value, what: str = 'field', step_iter=-1, delta: float=0.05):
         if what not in {'field', 'proposal_network'}:
             raise ValueError(f'what must be one of "field" or "proposal_network" '
                              f'but {what} was passed.')

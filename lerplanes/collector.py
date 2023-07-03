@@ -66,7 +66,10 @@ import csv
 import argparse
 import glob
 
-directory = 'logs/acc'
+parser = argparse.ArgumentParser(description='Choose dataset name.')
+parser.add_argument('--directory', type=str, help='path dir', default='logs/acc')
+args = parser.parse_args()
+directory = args.directory
 
 file_list = []
 for root, dirs, files in os.walk(directory):

@@ -1,12 +1,12 @@
 config = {
     'description': '',
 
-    'expname': 'acc_cutt',
-    'logdir': './logs/acc',
+    'expname': 'acc_thin',
+    'logdir': './logs/acc_thin',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/cutting_tissues_twice'],
+    'data_dirs': ['data/endonerf_full_datasets/thin_structures'],
     'contract': False,
     'ndc': True,
     'ndc_far': 1.2,
@@ -49,8 +49,8 @@ config = {
     'depth_huber_weight_proposal_net': 0.05,
     'step_iter': 900*2,
 
-    # Training settings, since we valid after train, just disable valid
-    'valid_every': 100000, 
+    # Training settings
+    'valid_every': 100000,
     'save_every': 1800*2,
     'save_outputs': True,
     'train_fp16': True,
@@ -64,7 +64,7 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 156]}
+            'resolution': [128, 128, 128, 121]}
         #     ,
         # {'num_input_coords': 4, 'num_output_coords': 8,
         #     'resolution': [256, 256, 256, 156]}
@@ -82,7 +82,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 156]
+            'resolution': [64, 64, 64, 121]
         },
         {
             'encoder_type': 'OneBlob',

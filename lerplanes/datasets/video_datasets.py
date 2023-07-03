@@ -67,7 +67,7 @@ class VideoEndoDataset(BaseDataset):
         self.mask_weights = None
         self.p = None  # p is the additional weight
         self.bg_color = kwargs.get('bg_color', 1)
-        self.depth_type = kwargs.get('depth_type', 'depth')
+        self.depth_type = kwargs.get('depth_type', 'gt_depth')
 
         if contraction and ndc:
             raise ValueError("Options 'contraction' and 'ndc' are exclusive.")
@@ -153,16 +153,23 @@ class VideoEndoDataset(BaseDataset):
             intrinsics.center_y = intrinsics.center_y - 6
             
 
-        imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [
-            imgs, masks, depths]]
-        # we use near and far to normalize depth
-        self.close_depth = 0
-        self.inf_depth = percentile_torch(self.depths, 99.9)
-        # values larger than inf_depth should be regarded as unreliable, use 0 to replace them
-        self.depths[self.depths > self.inf_depth] = 0
-        # pre norm depth to be in [0, 1]
-        self.depths = (self.depths - self.close_depth) / (self.inf_depth -
-                                                            self.close_depth + torch.finfo(self.depths.dtype).eps)
+        imgs, self.masks, self.depths = [torch.cat(lst, dim=0) for lst in [imgs, masks, depths]]
+
+        # treat depth differently
+        # for GT depth, the depth may contains much zero value and should treat as unreliable
+        # for monocular depth, the depth itself is full, but varies with scale and shift.
+        if self.depth_type != 'mono_depth':
+            # we use near and far to normalize depth
+            self.close_depth = 0
+            self.inf_depth = percentile_torch(self.depths, 99.9)
+            # values larger than inf_depth should be regarded as unreliable, use 0 to replace them
+            self.depths[self.depths > self.inf_depth] = 0
+            # pre norm depth to be in [0, 1]
+            self.depths = (self.depths - self.close_depth) / (self.inf_depth -
+                                                                self.close_depth + torch.finfo(self.depths.dtype).eps)
+        else:
+            # for monocular depth, there are full depths, just scale every image
+            self.depths /= 255.
 
         # generate dummy pose
         self.poses = torch.stack(
@@ -419,15 +426,16 @@ class VideoEndoDataset(BaseDataset):
         imgs = out['imgs']
 
         # Decide BG color
-        bg_color = torch.ones((1, 3), dtype=torch.float32, device=dev)
-        if self.split == 'train' and imgs.shape[-1] == 4:
-            bg_color = torch.rand((1, 3), dtype=torch.float32, device=dev)
-        if self.bg_color == 0:
-            bg_color = None
-        out['bg_color'] = bg_color
         if self.bg_color == 0:
             bg_color = torch.zeros((1, 3), dtype=torch.float32, device=dev)
-
+        elif self.bg_color == 1 and imgs.shape[-1] != 4:
+            bg_color = torch.ones((1, 3), dtype=torch.float32, device=dev)
+        else:
+            bg_color = torch.rand((1, 3), dtype=torch.float32, device=dev)
+        out['bg_color'] = bg_color
+        # hard code bg color to be black
+        # bg_color = 0
+        # out['bg_color'] = None
         # Alpha compositing
         if imgs is not None and imgs.shape[-1] == 4:
             imgs = imgs[:, :3] * imgs[:, 3:] + bg_color * (1.0 - imgs[:, 3:])

@@ -23,24 +23,24 @@ def render_speed(trainer: Union[VideoTrainer, StaticTrainer]):
         if img_idx > 15:
             print('Done')
             break
-        ts_render = trainer.eval_step(data)
+        _ = trainer.eval_step(data)
     pb = tqdm(total=len(dataset), desc=f"Evaluating time")
     start_time = time.time()
     for img_idx, data in enumerate(dataset):
-        ts_render = trainer.eval_step(data)
-        if isinstance(dataset.img_h, int):
-            img_h, img_w = dataset.img_h, dataset.img_w
-        else:
-            img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
-        preds_rgb = (
-            ts_render["rgb"]
-            .reshape(img_h, img_w, 3)
-            .cpu()
-            .clamp(0, 1)
-            .mul(255.0)
-            .byte()
-            .numpy()
-        )
+        _ = trainer.eval_step(data)
+        # if isinstance(dataset.img_h, int):
+        #     img_h, img_w = dataset.img_h, dataset.img_w
+        # else:
+        #     img_h, img_w = dataset.img_h[img_idx], dataset.img_w[img_idx]
+        # preds_rgb = (
+        #     ts_render["rgb"]
+        #     .reshape(img_h, img_w, 3)
+        #     .cpu()
+        #     .clamp(0, 1)
+        #     .mul(255.0)
+        #     .byte()
+        #     .numpy()
+        # )
         pb.update(1)
     time_in_all = time.time() - start_time
     pb.close()
