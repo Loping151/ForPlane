@@ -225,10 +225,14 @@ class BaseTrainer(abc.ABC):
         #     preds = preds * masks
 
         #     err = (gt - preds) ** 2
+
+        masked_gt = gt[masks.repeat_interleave(3, dim=-1).bool()].reshape(-1, 3)
+        masked_preds = preds[masks.repeat_interleave(3, dim=-1).bool()].reshape(-1, 3)
         gt = gt * masks
         preds = preds * masks
         mse = img2mse(preds, gt)
         psnr = mse2psnr(mse)
+        masked_psnr = mse2psnr(img2mse(masked_preds, masked_gt))
         ssim_ = ssim(preds, gt, format='HWC')
         lpips_ = _lpips.forward(preds, gt, format='HWC')
 
@@ -243,7 +247,8 @@ class BaseTrainer(abc.ABC):
         return {
             'psnr': psnr.item(),
             'ssim': ssim_.item(),
-            'lpips': torch.mean(lpips_).item()
+            'lpips': torch.mean(lpips_).item(),
+            'masked_psnr': masked_psnr.item(),
         }
 
     def evaluate_metrics(self,
@@ -318,8 +323,8 @@ class BaseTrainer(abc.ABC):
                         depth_name + ".png"), out_depth_np)
 
         # simple check for acc
-        if preds['accumulation'].min() < 0.9:
-            print(f"warning, the accumulation is less than 0.9, cur is {preds['accumulation'].min()}, may incur wrong depth")
+        if preds['accumulation'].mean() < 0.5:
+            print(f"warning, the accumulation is less than 0.5, cur is {preds['accumulation'].mean()}, may incur wrong depth")
 
         if out_pred:
             return summary, out_img_np, out_depth_np, preds_rgb

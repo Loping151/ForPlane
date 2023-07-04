@@ -130,6 +130,7 @@ def main():
     config['occ_step_size'] = float(config.get('occ_step_size', -1))
     config['step_iter'] = int(config.get('step_iter', -1))
     config['depth_huber_weight'] = float(config.get('depth_huber_weight', -1))
+    config['mono_depth_weight'] = float(config.get('mono_depth_weight', -1))
     
     if args.validate_only and args.render_only:
         raise ValueError(
