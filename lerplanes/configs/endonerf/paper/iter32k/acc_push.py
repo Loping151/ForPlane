@@ -2,7 +2,7 @@ config = {
     'description': 'iter32k',
 
     'expname': 'push',
-    'logdir': './exps/plots', #iter32k_gtdp
+    'logdir': './exps/endonerf_iter32k_gtdp', #iter32k_gtdp
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -39,15 +39,15 @@ config = {
     'histogram_loss_weight': 1.0,
     'mono_depth_weight': 0, 
     'mono_depth_weight_proposal_net': 0, 
-    'l1_time_planes': 0.0001,
+    'l1_time_planes': 0.001,
     'l1_time_planes_proposal_net': 0.0001,
-    'plane_tv_weight': 0.0001,
+    'plane_tv_weight': 0.001,
     'plane_tv_weight_proposal_net': 0.0001,
-    'time_smoothness_weight': 0.03,
+    'time_smoothness_weight': 0.05,
     'time_smoothness_weight_proposal_net': 0.0001,
-    'depth_huber_weight': 0.05,
-    'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 900*2,
+    'depth_huber_weight': 1.0,
+    'depth_huber_weight_proposal_net': 1.0,
+    'step_iter': 900*3,
 
     # Training settings
     'valid_every': 100000,

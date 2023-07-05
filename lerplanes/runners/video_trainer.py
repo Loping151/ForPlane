@@ -248,7 +248,11 @@ class VideoTrainer(BaseTrainer):
                 per_scene_metrics_avr[key] = [value]
         save_all_metrics(per_scene_metrics, os.path.join(self.log_dir, f"metrics_all_step{self.global_step}.csv")) 
         with open(os.path.join(self.log_dir, 'endo_log.txt'), 'w') as file:
-            file.writelines((str(per_scene_metrics_avr)))
+            file.write('PSNR,{}\n'.format(per_scene_metrics_avr['psnr'][0]))
+            file.write('SSIM,{}\n'.format(per_scene_metrics_avr['ssim'][0]))
+            file.write('LPIPS,{}\n'.format(per_scene_metrics_avr['lpips'][0]))
+            file.write('FLIP,{}\n'.format(per_scene_metrics_avr['FLIP'][0]))
+            file.write('Masked_PSNR,{}\n'.format(per_scene_metrics_avr['masked_psnr'][0]))
 
         # _lpips = lpips_warper()
 

@@ -1,12 +1,12 @@
 config = {
     'description': '',
 
-    'expname': 'hamlyn_seq1',
-    'logdir': './exps/lerplane/hamlyn_32k',
+    'expname': 'hamlyn_seq5',
+    'logdir': './exps/lerplane/hamlyn_32k_gt_dp',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq1'],
+    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq5'],
     'contract': False,
     'ndc': True,
     'ndc_far': 2.0,
@@ -29,8 +29,7 @@ config = {
     "eval_batch_size": 65536,
 
     # Regularization
-    # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
-    'distortion_loss_weight': 0.0,
+    'distortion_loss_weight': 0.001,
     'histogram_loss_weight': 1.0,
     'mono_depth_weight': 0, 
     'mono_depth_weight_proposal_net': 0, 

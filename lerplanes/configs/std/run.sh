@@ -24,3 +24,15 @@ PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/hamlyn
 PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/hamlyn/lerplane_32k_hamlyn5.py
 PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/hamlyn/lerplane_32k_hamlyn6.py
 PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/hamlyn/lerplane_32k_hamlyn7.py
+
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_cutt.py
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_push.py
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_pull.py
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_tear.py
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_thin.py
+PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/std/std_trac.py
+
+
+
+
+

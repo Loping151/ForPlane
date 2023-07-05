@@ -1,8 +1,8 @@
 config = {
     'description': '',
 
-    'expname': 'std_cutt1',
-    'logdir': './logs/standard',
+    'expname': 'cutt1',
+    'logdir': './exps/lerplane/endo_32k_gt_dp',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -29,19 +29,18 @@ config = {
     "eval_batch_size": 65536,
 
     # Regularization
-    # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
-    'distortion_loss_weight': 0.0,
+    'distortion_loss_weight': 0.001,
     'histogram_loss_weight': 1.0,
     'mono_depth_weight': 0, 
     'mono_depth_weight_proposal_net': 0, 
-    'l1_time_planes': 0.0001,
-    'l1_time_planes_proposal_net': 0.0001,
-    'plane_tv_weight': 0.0001,
-    'plane_tv_weight_proposal_net': 0.0001,
+    'l1_time_planes': 0.001,
+    'l1_time_planes_proposal_net': 0.001,
+    'plane_tv_weight': 0.001,
+    'plane_tv_weight_proposal_net': 0.001,
     'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
-    'depth_huber_weight': 0.05,
-    'depth_huber_weight_proposal_net': 0.05,
+    'depth_huber_weight': 0.5,
+    'depth_huber_weight_proposal_net': 0.5,
     'step_iter': 900,
 
     # Training settings
