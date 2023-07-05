@@ -69,7 +69,7 @@ class LowrankModel(nn.Module):
         self.linear_decoder_layers = linear_decoder_layers
         self.density_act = init_density_activation(density_activation)
         self.timer = CudaTimer(enabled=False)
-
+        self.use_proposal_weight_anneal = None
         self.spatial_distortion: Optional[SpatialDistortion] = None
         if self.is_contracted:
             self.spatial_distortion = SceneContraction(

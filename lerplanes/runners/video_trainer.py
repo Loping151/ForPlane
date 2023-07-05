@@ -93,6 +93,8 @@ class VideoTrainer(BaseTrainer):
 
     def train_step(self, data: Dict[str, Union[int, torch.Tensor]], **kwargs):
         scale_ok = super().train_step(data, **kwargs)
+        # if self.global_step in [900,1800,2700,3600]:
+        #     self.validate(self.global_step)
 
         if self.global_step == self.isg_step:
             self.train_dataset.enable_isg()
@@ -162,7 +164,7 @@ class VideoTrainer(BaseTrainer):
 
 
     @torch.no_grad()
-    def validate(self):
+    def validate(self, steps = ''):
         dataset = self.test_dataset
         pred_frames, out_depths = [], []
         per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
@@ -178,9 +180,9 @@ class VideoTrainer(BaseTrainer):
         img_list = []
         # indexex = []
         logdir = self.log_dir
-        if not os.path.exists(os.path.join(logdir, 'estm')):
-            os.makedirs(os.path.join(logdir, 'estm', 'rgb'), exist_ok=True)
-            os.makedirs(os.path.join(logdir, 'estm', 'depth'), exist_ok=True)
+        if not os.path.exists(os.path.join(logdir, 'estm'+str(steps))):
+            os.makedirs(os.path.join(logdir, 'estm'+str(steps), 'rgb'), exist_ok=True)
+            os.makedirs(os.path.join(logdir, 'estm'+str(steps), 'depth'), exist_ok=True)
             
         # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         for img_idx, data in tqdm(enumerate(dataset)):
@@ -199,10 +201,12 @@ class VideoTrainer(BaseTrainer):
 
             # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
             # save rgb and depth
-            cv2.imwrite(os.path.join(logdir, 'estm', 'rgb', str(img_idx).zfill(6)+'.png'),
+            cv2.imwrite(os.path.join(logdir, 'estm'+str(steps), 'rgb', str(img_idx).zfill(6)+'.png'),
                         cv2.cvtColor((np.array(out_pred)*255).astype(np.uint8), cv2.COLOR_RGB2BGR))
-            cv2.imwrite(os.path.join(logdir, 'estm', 'depth', str(img_idx).zfill(6)+'.png'),
+            cv2.imwrite(os.path.join(logdir, 'estm'+str(steps), 'depth', str(img_idx).zfill(6)+'.png'),
                         (out_depth[...,0]).astype(np.uint8))
+        if steps!='': 
+            return
 
         if self.save_video:
             write_video_to_file(

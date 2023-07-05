@@ -1,12 +1,12 @@
 config = {
     'description': 'iter32k',
 
-    'expname': 'push',
-    'logdir': './exps/plots', #iter32k_gtdp
+    'expname': 'hamlyn1_32k',
+    'logdir': './exps/hamlyn_32k_gt_depth',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/endonerf_full_datasets/pushing_tissues'],
+    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq1'],
     'contract': False,
     'ndc': True,
     'ndc_far': 1.2,
@@ -45,12 +45,12 @@ config = {
     'plane_tv_weight_proposal_net': 0.0001,
     'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
-    'depth_huber_weight': 0.05,
-    'depth_huber_weight_proposal_net': 0.05,
-    'step_iter': 900*2,
+    'depth_huber_weight': 1.0,
+    'depth_huber_weight_proposal_net': 1.0,
+    'step_iter': 900*3,
 
-    # Training settings
-    'valid_every': 100000,
+    # Training settings, since we valid after train, just disable valid
+    'valid_every': 100000, 
     'save_every': 1800*2,
     'save_outputs': True,
     'train_fp16': True,
@@ -64,7 +64,7 @@ config = {
     'use_proposal_weight_anneal': True,
     'proposal_net_args_list': [
         {'num_input_coords': 4, 'num_output_coords': 8,
-            'resolution': [128, 128, 128, 136]}
+            'resolution': [128, 128, 128, 156]}
         #     ,
         # {'num_input_coords': 4, 'num_output_coords': 8,
         #     'resolution': [256, 256, 256, 156]}
@@ -82,7 +82,7 @@ config = {
             'input_coordinate_dim': 4,
             'output_coordinate_dim': 16,
             'disable_view_encoder': True,
-            'resolution': [64, 64, 64, 136]
+            'resolution': [64, 64, 64, 150]
         },
         {
             'encoder_type': 'OneBlob',
