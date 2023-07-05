@@ -1,12 +1,12 @@
 config = {
     'description': 'iter32k',
 
-    'expname': 'hamlyn1_32k',
+    'expname': 'hamlyn3_32k',
     'logdir': './exps/hamlyn_32k_mono_depth',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
-    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq1'],
+    'data_dirs': ['data/hamlyn_lerplane/hamlyn_seq3'],
     'contract': False,
     'ndc': True,
     'ndc_far': 1.2,
