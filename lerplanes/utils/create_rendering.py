@@ -280,7 +280,7 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
         trainer: The trainer object which is used for rendering
         extra_name: String to append to the saved file-name
     """
-    chosen_cam_idx = 15  # the frame idx among dataset
+    chosen_cam_idx = 30  # the frame idx among dataset
     model: LowrankModel = trainer.model
     dataset = trainer.test_dataset
 
@@ -289,8 +289,9 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
     for multires_grids in model.field.grids:
         parameters.append([grid.data for grid in multires_grids])
     pn_parameters = []
-    for pn in model.proposal_networks:
-        pn_parameters.append([grid_plane.data for grid_plane in pn.grids])
+    if model.occ_grid_reso <= 0:
+        for pn in model.proposal_networks:
+            pn_parameters.append([grid_plane.data for grid_plane in pn.grids])
 
     camdata = None
     for img_idx, data in enumerate(dataset):
@@ -314,9 +315,10 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
         for i in range(len(model.field.grids)):
             for plane_idx in [2, 4, 5]:
                 model.field.grids[i][plane_idx].data = parameters[i][plane_idx]
-        for i in range(len(model.proposal_networks)):
-            for plane_idx in [2, 4, 5]:
-                model.proposal_networks[i].grids[plane_idx].data = pn_parameters[i][plane_idx]
+        if model.occ_grid_reso <= 0:
+            for i in range(len(model.proposal_networks)):
+                for plane_idx in [2, 4, 5]:
+                    model.proposal_networks[i].grids[plane_idx].data = pn_parameters[i][plane_idx]
         preds = trainer.eval_step(camdata)
         full_out = preds["rgb"].reshape(img_h, img_w, 3).cpu()
 
@@ -325,10 +327,11 @@ def decompose_space_time(trainer: StaticTrainer, extra_name: str = "") -> None:
             for plane_idx in [2, 4, 5]:  # time-grids off
                 model.field.grids[i][plane_idx].data = torch.ones_like(
                     parameters[i][plane_idx])
-        for i in range(len(model.proposal_networks)):
-            for plane_idx in [2, 4, 5]:
-                model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(
-                    pn_parameters[i][plane_idx])
+        if model.occ_grid_reso <= 0:
+            for i in range(len(model.proposal_networks)):
+                for plane_idx in [2, 4, 5]:
+                    model.proposal_networks[i].grids[plane_idx].data = torch.ones_like(
+                        pn_parameters[i][plane_idx])
         preds = trainer.eval_step(camdata)
         spatial_out = preds["rgb"].reshape(img_h, img_w, 3).cpu()
 

@@ -165,7 +165,8 @@ def main():
     #     args.log_dir = os.path.join(config['logdir'], config['expname'])
 
     # case2: always train a new model
-    if args.log_dir is not None:
+    if args.log_dir is None and (args.validate_only is True or args.render_only is True or args.spacetime_only is True or args.test_speed is True):
+        args.log_dir = os.path.join(config['logdir'], config['expname'])
         checkpoint_path = os.path.join(args.log_dir, "model.pth")
         is_training = not (args.validate_only or args.render_only or args.spacetime_only or args.test_speed)
         trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
