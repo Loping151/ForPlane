@@ -21,7 +21,7 @@ config = {
     'bg_color': 0,
     'depth_type': 'gt_depth',
     # Optimization settings
-    'num_steps': 600*2,
+    'num_steps': 550*2,
     'batch_size': 32768//2,
     'scheduler_type': 'warmup_cosine',
     'optim_type': 'adam',
