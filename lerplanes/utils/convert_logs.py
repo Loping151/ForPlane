@@ -32,13 +32,13 @@ def convert_logs(logs_path, save=None):
     return performance
 
 if __name__ == "__main__":
-    tgt_path = ['exps/hamlyn_32k_gt_depth/hamlyn1_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn2_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn3_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn4_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn5_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn6_32k/endo_log.txt',
-                'exps/hamlyn_32k_gt_depth/hamlyn7_32k/endo_log.txt']
+    tgt_path = ['exps/endonerf_iter32k_gtdp/cutt/endo_log.txt',
+                'exps/endonerf_iter32k_gtdp/pull/endo_log.txt',
+                'exps/endonerf_iter32k_gtdp/push/endo_log.txt',
+                'exps/endonerf_iter32k_gtdp/tear/endo_log.txt',
+                'exps/endonerf_iter32k_gtdp/thin/endo_log.txt',
+                'exps/endonerf_iter32k_gtdp/trac/endo_log.txt',
+                ]
     
     for i in tgt_path:
         convert_logs(i, save=True)
