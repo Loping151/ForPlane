@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 
 # train the endonerf dataset
 PYTHONPATH=. python lerplanes/main.py --config-path lerplanes/configs/endonerf/paper/iter32k/acc_cutt.py
