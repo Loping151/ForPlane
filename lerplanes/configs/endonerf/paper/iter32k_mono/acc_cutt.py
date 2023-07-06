@@ -1,8 +1,8 @@
 config = {
     'description': 'iter32k',
 
-    'expname': 'cutt',
-    'logdir': './exps/iter32k_monodp',
+    'expname': 'cutt_5',
+    'logdir': './exps/endonerf_iter32k_monodp',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -37,17 +37,17 @@ config = {
     # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
     'distortion_loss_weight': 0.0,
     'histogram_loss_weight': 1.0,
-    'mono_depth_weight': 1.0, 
-    'mono_depth_weight_proposal_net': 1.0, 
-    'l1_time_planes': 0.0001,
+    'mono_depth_weight': 5.0, 
+    'mono_depth_weight_proposal_net': 3.0, 
+    'l1_time_planes': 0.001,
     'l1_time_planes_proposal_net': 0.0001,
-    'plane_tv_weight': 0.0001,
+    'plane_tv_weight': 0.001,
     'plane_tv_weight_proposal_net': 0.0001,
     'time_smoothness_weight': 0.03,
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.0,
     'depth_huber_weight_proposal_net': 0.0,
-    'step_iter': 900*2,
+    'step_iter': 900*4,
 
     # Training settings, since we valid after train, just disable valid
     'valid_every': 100000, 
