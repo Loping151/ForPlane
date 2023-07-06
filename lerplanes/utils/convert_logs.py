@@ -18,26 +18,27 @@ def convert_logs(logs_path, save=None):
     performance = pd.DataFrame(performance)
     if save is not None:
         with open(os.path.join(os.path.dirname(logs_path), 'metrics.txt'), 'w') as f:
-            f.write('PSNR,{}\n'.format(performance['psnr'].item()))
+            f.write('{}\n'.format(performance['psnr'].item()))
             # f.write('SSIM,{}\n'.format(ssim_.item()))
             # f.write('LPIPS,{}\n'.format(torch.mean(lpips_).item()))
             # f.write('FLIPS,{}\n'.format(flip_))
             # f.write('Masked PSNR,{}\n'.format(masked_psnr.item()))
-            f.write('FLIP,{}\n'.format(performance['FLIP'].item()))
-            f.write('LPIPS,{}\n'.format(performance['lpips'].item()))
-            f.write('SSIM,{}\n'.format(performance['ssim'].item()))
-            f.write('Masked_PSNR,{}\n'.format(performance['masked_psnr'].item()))
+
+            f.write('{}\n'.format(performance['lpips'].item()))
+            f.write('{}\n'.format(performance['ssim'].item()))
+            f.write('{}\n'.format(performance['FLIP'].item()))
+            f.write('{}\n'.format(performance['masked_psnr'].item()))
 
     return performance
 
 if __name__ == "__main__":
-    tgt_path = ['./exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq1/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq2/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq3/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq4/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq5/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq6/endo_log.txt',
-                './exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq7/endo_log.txt']
+    tgt_path = ['exps/hamlyn_32k_gt_depth/hamlyn1_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn2_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn3_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn4_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn5_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn6_32k/endo_log.txt',
+                'exps/hamlyn_32k_gt_depth/hamlyn7_32k/endo_log.txt']
     
     for i in tgt_path:
         convert_logs(i, save=True)
