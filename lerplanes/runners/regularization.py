@@ -317,7 +317,7 @@ class MonoDepthLoss(Regularizer):
                 if depth.shape[0] % (128*128) != 0:
                     print('Warning: MonodepthLoss failed')
                     return torch.tensor(0.0)
-                total += self.criteria(depth.view(-1,128,128), target_depth.view(-1,128,128), valid_mask.view(-1,128,128)) # a swift fix for mono depth loss
+                total += self.criteria(depth.view(-1,64,64), target_depth.view(-1,64,64), valid_mask.view(-1,64,64)) # a swift fix for mono depth loss
             elif self.what == 'proposal_network':
                 for i in range(model.num_proposal_iterations):
                     depth = model_out[f"prop_depth_{i}"]

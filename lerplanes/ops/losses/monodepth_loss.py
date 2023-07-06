@@ -159,7 +159,7 @@ class ScaleAndShiftInvariantLoss(nn.Module):
         total = self.__data_loss(self.__prediction_ssi, target, mask)
         if self.__alpha > 0:
             total += self.__alpha * self.__regularization_loss(self.__prediction_ssi, target, mask)
-
+        # print("total loss: ", total)
         return total
 
     def __get_prediction_ssi(self):

@@ -27,7 +27,7 @@ config = {
     'optim_type': 'adam',
     'lr': 0.01,
     "eval_batch_size": 65536,
-
+    
     # acc
     'occ_grid_reso': 64,
     'occ_step_size': 4e-3,
@@ -43,11 +43,11 @@ config = {
     'l1_time_planes_proposal_net': 0.0001,
     'plane_tv_weight': 0.0001,
     'plane_tv_weight_proposal_net': 0.0001,
-    'time_smoothness_weight': 0.03,
+    'time_smoothness_weight': 0.05,
     'time_smoothness_weight_proposal_net': 0.0001,
     'depth_huber_weight': 0.0,
     'depth_huber_weight_proposal_net': 0.0,
-    'step_iter': 900*2,
+    'step_iter': 900*4,
 
     # Training settings
     'valid_every': 100000,

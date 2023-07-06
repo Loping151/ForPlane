@@ -147,7 +147,7 @@ def main():
     assert config['depth_type'] == 'mono_depth' and config['mono_depth_weight'] > 0 or config['depth_type'] != 'mono_depth' and config['depth_huber_weight'] > 0
     pprint.pprint(config)
 
-    if args.validate_only or args.render_only or args.test_speed:
+    if args.validate_only or args.render_only or args.test_speed or args.spacetime_only:
         if args.log_dir is None:
             args.log_dir = os.path.join(config['logdir'], config['expname'])
         print('log_dir:', args.log_dir)
@@ -165,8 +165,15 @@ def main():
     #     args.log_dir = os.path.join(config['logdir'], config['expname'])
 
     # case2: always train a new model
-    if args.log_dir is None and (args.validate_only is True or args.render_only is True or args.spacetime_only is True or args.test_speed is True):
-        args.log_dir = os.path.join(config['logdir'], config['expname'])
+    if args.log_dir is None:
+        if (args.validate_only is True or args.render_only is True or args.spacetime_only is True or args.test_speed is True):
+            args.log_dir = os.path.join(config['logdir'], config['expname'])
+            checkpoint_path = os.path.join(args.log_dir, "model.pth")
+            is_training = not (args.validate_only or args.render_only or args.spacetime_only or args.test_speed)
+            trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
+        else:
+            pass
+    else:
         checkpoint_path = os.path.join(args.log_dir, "model.pth")
         is_training = not (args.validate_only or args.render_only or args.spacetime_only or args.test_speed)
         trainer.load_model(torch.load(checkpoint_path), is_training=is_training)
