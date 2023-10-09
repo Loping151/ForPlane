@@ -5,8 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from lerplanes.models.density_fields import KPlaneDensityField
-from lerplanes.models.kplane_field import KPlaneField
+from lerplanes.models.density_fields import lerplaneDensityField
+from lerplanes.models.lerplane_field import LerplaneField
 from lerplanes.ops.activations import init_density_activation
 from lerplanes.raymarching.ray_samplers import (ProposalNetworkSampler,
                                                 RayBundle, RaySamples,
@@ -76,7 +76,7 @@ class LowrankModel(nn.Module):
                 order=float('inf'), global_scale=global_scale,
                 global_translation=global_translation)
 
-        self.field = KPlaneField(
+        self.field = LerplaneField(
             aabb,
             grid_config=self.config,
             concat_features_across_scales=self.concat_features_across_scales,
@@ -115,7 +115,7 @@ class LowrankModel(nn.Module):
                 assert len(
                     self.proposal_net_args_list) == 1, "Only one proposal network is allowed."
                 prop_net_args = self.proposal_net_args_list[0]
-                network = KPlaneDensityField(
+                network = lerplaneDensityField(
                     aabb, spatial_distortion=self.spatial_distortion,
                     density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args)
                 self.proposal_networks.append(network)
@@ -125,7 +125,7 @@ class LowrankModel(nn.Module):
                 for i in range(self.num_proposal_iterations):
                     prop_net_args = self.proposal_net_args_list[min(
                         i, len(self.proposal_net_args_list) - 1)]
-                    network = KPlaneDensityField(
+                    network = lerplaneDensityField(
                         aabb, spatial_distortion=self.spatial_distortion,
                         density_activation=self.density_act, linear_decoder=self.linear_decoder, **prop_net_args,
                     )

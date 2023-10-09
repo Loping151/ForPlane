@@ -6,6 +6,8 @@
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
 > MICCAI2023, Oral, STAR Award
 
+![](lerplanes/images/overview.png)
+
 ## Schedule
 - [ ] Initial Code Release.
 - [x] Further check of the reproducibility.
@@ -13,6 +15,8 @@
 
 ## Introduction
 Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enable using lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
+
+<video src="lerplanes/images/trainging_speed_vs_endo.mp4"></video>
 
 ## Installation
 
@@ -34,14 +38,18 @@ Please download the dataset from [EndoNeRF](https://github.com/med-air/EndoNeRF)
 </details>
 
 ### training
-<details> <summary>Download the datasets</summary> 
+<details> <summary>Using configs for training</summary> 
 
 Lerplane uses configs to control the training process. The configs are stored in the `lerplane/configs` folder.
 To train a model, run the following command:
 ```
-python train.py --config configs/lerplane.yaml
+export CUDA_VISIBLE_DEVICES=0
+PYTHONPATH='.' python lerplanes/main.py --config-path config.yaml
 ```
 </details>
+
+### Evaluation
+We use the same evaluation protocol as [EndoNeRF](https://github.com/med-air/EndoNeRF). So please follow the instructions in EndoNeRF.
 
 ## Acknowledgements
 We would like to acknowledge the following inspring work:

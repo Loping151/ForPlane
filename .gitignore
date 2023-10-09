@@ -23,4 +23,5 @@ plenoxels/*
 exps
 
 lerplanes/configs
+*.ipynb
 

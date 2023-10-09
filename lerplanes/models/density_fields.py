@@ -8,11 +8,11 @@ import torch
 import torch.nn as nn
 import tinycudann as tcnn
 
-from lerplanes.models.kplane_field import interpolate_ms_features, normalize_aabb, init_grid_param
+from lerplanes.models.lerplane_field import interpolate_ms_features, normalize_aabb, init_grid_param
 from lerplanes.raymarching.spatial_distortions import SpatialDistortion
 
 
-class KPlaneDensityField(nn.Module):
+class lerplaneDensityField(nn.Module):
     def __init__(self,
                  aabb,
                  resolution,
@@ -46,9 +46,9 @@ class KPlaneDensityField(nn.Module):
                 "n_hidden_layers": 1,
             },
         )
-        log.info(f"Initialized KPlaneDensityField. hexplane={self.hexplane} - "
+        log.info(f"Initialized lerplaneDensityField. hexplane={self.hexplane} - "
                  f"resolution={resolution}")
-        log.info(f"KPlaneDensityField grids: \n{self.grids}")
+        log.info(f"lerplaneDensityField grids: \n{self.grids}")
 
     def get_density(self, pts: torch.Tensor, timestamps: Optional[torch.Tensor] = None):
         if self.spatial_distortion is not None:
