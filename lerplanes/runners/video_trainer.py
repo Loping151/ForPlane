@@ -36,9 +36,9 @@ class VideoTrainer(BaseTrainer):
                  save_every: int,
                  valid_every: int,
                  save_outputs: bool,
-                 isg_step: int,
-                 ist_step: int,
-                 device: Union[str, torch.device],
+                 isg_step: int = 0,
+                 ist_step: int = 0,
+                 device: Union[str, torch.device] = 'cpu',
                  **kwargs
                  ):
         self.train_dataset = tr_dset
@@ -95,7 +95,8 @@ class VideoTrainer(BaseTrainer):
         scale_ok = super().train_step(data, **kwargs)
         # if self.global_step in [900,1800,2700,3600]:
         #     self.validate(self.global_step)
-
+        if self.global_step % 6 == 0:
+            self.validate(video_frame = self.global_step // 6)
         if self.global_step == self.isg_step:
             self.train_dataset.enable_isg()
             raise StopIteration  # Whenever we change the dataset
@@ -164,7 +165,7 @@ class VideoTrainer(BaseTrainer):
 
 
     @torch.no_grad()
-    def validate(self, steps = ''):
+    def validate(self, steps = '', video_frame=None):
         dataset = self.test_dataset
         pred_frames, out_depths = [], []
         per_scene_metrics: Dict[str, Union[float, List]] = defaultdict(list)
@@ -183,9 +184,14 @@ class VideoTrainer(BaseTrainer):
         if not os.path.exists(os.path.join(logdir, 'estm'+str(steps))):
             os.makedirs(os.path.join(logdir, 'estm'+str(steps), 'rgb'), exist_ok=True)
             os.makedirs(os.path.join(logdir, 'estm'+str(steps), 'depth'), exist_ok=True)
-            
+        if video_frame is not None and not os.path.exists(os.path.join(logdir, 'video')):
+            os.mkdir(os.path.join(logdir, 'video'))
         # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
         for img_idx, data in tqdm(enumerate(dataset)):
+
+            if video_frame is not None:
+                if img_idx != video_frame % len(dataset):
+                    continue
 
             preds = self.eval_step(data)
             out_metrics, out_img, out_depth, out_pred= self.evaluate_metrics(
@@ -199,6 +205,9 @@ class VideoTrainer(BaseTrainer):
                 per_scene_metrics[k].append(v)
             img_list.append(out_pred.clone())
 
+            if video_frame is not None:
+                cv2.imwrite(os.path.join(logdir, 'video', str(video_frame).zfill(6)+'.png'), cv2.cvtColor((np.array(out_pred)*255).astype(np.uint8), cv2.COLOR_RGB2BGR))
+                return
             # imageio.imwrite(os.path.join(logdir, 'estm', str(img_idx)+'.png'), torch.round(out_pred*255).to(torch.uint8))
             # save rgb and depth
             cv2.imwrite(os.path.join(logdir, 'estm'+str(steps), 'rgb', str(img_idx).zfill(6)+'.png'),
@@ -444,3 +453,6 @@ def save_all_metrics(per_scene_metrics, data_path):
 
     df = pd.DataFrame.from_dict(per_scene_metrics)
     df.to_csv(data_path, index=True)
+
+
+

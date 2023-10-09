@@ -188,11 +188,10 @@ class VideoEndoDataset(BaseDataset):
             1.0 - self.mask_weights).to(torch.device("cpu"))
 
         self.mask_weights = self.mask_weights.reshape(
-            len(self.timestamps), intrinsics.height, intrinsics.width)
+            -1, intrinsics.height, intrinsics.width)
         freq = (1 - self.mask_weights).sum(0)
         self.p = freq / torch.sqrt((torch.pow(freq, 2)).sum())
-        self.mask_weights = self.mask_weights * \
-            (1.0 + self.p * self.p_ratio)
+        self.mask_weights = self.mask_weights * (1.0 + self.p * self.p_ratio)
         self.mask_weights = self.mask_weights.reshape(
             -1) / torch.sum(self.mask_weights)
         # self.global_translation = torch.tensor([0, 0, 2.])

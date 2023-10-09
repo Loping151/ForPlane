@@ -164,7 +164,7 @@ class KPlaneField(nn.Module):
             assert self.encode_info.get('encode_items', None) in [
                 'sigma_out', 'xyzt', 'xyz', 'xyt', 'xyz', 'xy', None]
             assert self.encode_info.get('encoder_type', None) in [
-                'Frequency', 'OneBlob', None]
+                'Frequency', 'OneBlob', '1', None]
             try:
                 encode_length = len(self.encode_info.get(
                     'encode_items'))
@@ -197,6 +197,9 @@ class KPlaneField(nn.Module):
                 )
                 self.pt_encoded_dim += encode_length * \
                     self.encode_info.get('n_bins', 4)
+            elif self.encode_info.get('encoder_type') == '1':
+                self.pt_encoder = nn.Identity()
+                self.pt_encoded_dim += self.encode_info.get('length', 0)
             else:
                 self.pt_encoder = nn.Identity()
                 self.pt_encoded_dim += encode_length
@@ -344,6 +347,9 @@ class KPlaneField(nn.Module):
                         xyz[i] for i in self.encode_info.get('encode_items') if i != 't']]
                 encoded_pt = self.pt_encoder(encoded_items)
                 color_features.append(encoded_pt.detach())
+            if self.encode_info.get('encoder_type', 'None') == '1':
+                one_features = torch.ones((directions.shape[0], self.encode_info.get('length', 0)), device = directions.device)
+                color_features.append(one_features)
             if self.encode_info.get('sample_res'):
                 sample_feature = interpolate_ms_features(
                     pts.reshape(-1, pts.shape[-1]), ms_grids=self.grids,  # noqa

@@ -97,7 +97,7 @@ def main():
     p.add_argument('--save-train-time-step', action='store_true')
     p.add_argument('--config-path', type=str, required=True)
     p.add_argument('--log-dir', type=str, default=None)
-    p.add_argument('--seed', type=int, default=0)
+    p.add_argument('--seed', type=int, default=42)
     p.add_argument('override', nargs=argparse.REMAINDER)
 
     args = p.parse_args()
