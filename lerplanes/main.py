@@ -92,7 +92,7 @@ def main():
 
     p.add_argument('--render-only', action='store_true')
     p.add_argument('--validate-only', action='store_true')
-    p.add_argument('--spacetime-only', action='store_true')
+    # p.add_argument('--spacetime-only', action='store_true')
     p.add_argument('--test_speed', action='store_true')
     p.add_argument('--save-train-time-step', action='store_true')
     p.add_argument('--config-path', type=str, required=True)
@@ -185,8 +185,8 @@ def main():
         trainer.validate()
     elif args.render_only:
         render_to_path(trainer)
-    elif args.spacetime_only:
-        decompose_space_time(trainer, extra_name="")
+    # elif args.spacetime_only:
+    #     decompose_space_time(trainer, extra_name="")
     elif args.save_train_time_step:
         trainer.train_with_time_step_saving(trainer) 
     else:
