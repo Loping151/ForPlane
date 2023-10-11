@@ -1,6 +1,6 @@
 jax
 tqdm
-torch==11.8
+torch==1.13
 pillow
 opencv-python
 pandas
