@@ -1,8 +1,8 @@
 # LerPlane
 
-### [Paper](https://arxiv.org/abs/2103.11547) | [Models](https://arxiv.org/abs/2103.11547)
+### [Paper](https://arxiv.org/abs/2103.11547) | [Models](https://arxiv.org/pdf/2305.19906.pdf)
 
-> [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/abs/2103.11547) \
+> [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/pdf/2305.19906.pdf) \
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
 > MICCAI2023, Oral, STAR Award
 
