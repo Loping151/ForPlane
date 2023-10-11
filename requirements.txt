@@ -1,7 +1,6 @@
-git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
 jax
 tqdm
-torch
+torch==11.8
 pillow
 opencv-python
 pandas
