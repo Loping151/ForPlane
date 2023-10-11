@@ -13,9 +13,7 @@ import torch
 import torch.utils.data
 
 from lerplanes.runners import video_trainer
-from lerplanes.utils.create_rendering import (decompose_space_time,
-                                              render_speed, render_to_path,
-                                              render_to_path_with_pointcloud)
+from lerplanes.utils.create_rendering import render_speed, render_to_path
 from lerplanes.utils.parse_args import parse_optfloat
 
 
@@ -25,8 +23,6 @@ def seed_everything(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = True
 
 
 def get_freer_gpu():
@@ -39,17 +35,7 @@ def get_freer_gpu():
                                 for x in open(tmp_fname, 'r').readlines()]
             if len(memory_available) > 0:
                 return np.argmax(memory_available)
-    # The grep doesn't work with all GPUs. If it fails we ignore it.
     return None
-
-
-# gpu = get_freer_gpu()
-# gpu = None
-# if gpu is not None:
-#     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-#     print(f"CUDA_VISIBLE_DEVICES set to {gpu}")
-# else:
-#     print(f"Did not set GPU.")
 
 
 def setup_logging(log_level=logging.INFO):
