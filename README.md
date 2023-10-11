@@ -21,7 +21,7 @@ Reconstructing deformable tissues from endoscopic stereo videos in robotic surge
 ## Installation
 
 ### Set up the Python environment
-<details> <summary>Tested with an Ubuntu workstation i9-12900K, 3090GPU</summary>
+<details> <summary>Tested with an Ubuntu workstation i9-12900K, 3090GPU.</summary>
 
 ```
 conda create -n lerplane python=3.9
@@ -29,7 +29,7 @@ conda activate lerplane
 pip install -r requirements.txt
 pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch 
 ```
-We notice tiny-cuda-nn not compilable on latest GPUs like RTX4090(tested 2023.1). If you found OSError while installing tiny-cuda-nn, you can refer to this [issue](https://github.com/NVlabs/tiny-cuda-nn/issues/245) or this [article](https://zhuanlan.zhihu.com/p/643834111).
+We notice tiny-cuda-nn is sometimes not compilable on some latest GPUs like RTX4090(tested 2023.1). If you found `OSError` while installing tiny-cuda-nn, you can refer to this [issue](https://github.com/NVlabs/tiny-cuda-nn/issues/245) or this [article](https://zhuanlan.zhihu.com/p/643834111). We've successfully built the same env on an Ubuntu 22.04 workstation i7-13700K, 4090GPU with the commands above.
 </details>
 
 ### Set up datasets
