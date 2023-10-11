@@ -466,7 +466,7 @@ def init_dloader_random(_):
 
 
 def initialize_model(
-        runner: Union['StaticTrainer', 'PhototourismTrainer', 'VideoTrainer'],
+        runner: Union['PhototourismTrainer', 'VideoTrainer'],
         **kwargs) -> LowrankModel:
     """Initialize a `LowrankModel` according to the **kwargs parameters.
 
