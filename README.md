@@ -1,6 +1,6 @@
 # LerPlane
 
-### [Paper](https://arxiv.org/pdf/2305.19906.pdf) | [Models](Uploading, not available for now)
+### [Paper](https://arxiv.org/pdf/2305.19906.pdf)
 
 > [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/pdf/2305.19906.pdf) \
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
