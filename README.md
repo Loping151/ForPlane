@@ -14,21 +14,22 @@
 - [x] The code release for the extended version.
 
 ## Introduction
-Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enable using lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
+Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enabling the use of lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
 
 <video src="lerplanes/images/trainging_speed_vs_endo.mp4"></video>
 
 ## Installation
 
-### Set up the python environment
+### Set up the Python environment
 <details> <summary>Tested with an Ubuntu workstation i9-12900K, 3090GPU</summary>
 
 ```
 conda create -n lerplane python=3.9
 conda activate lerplane
+pip install -r requirements.txt
 pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch 
-pip install -r requirments.txt
 ```
+We notice tiny-cuda-nn not compilable on latest GPUs like RTX4090(tested 2023.1). If you found OSError while installing tiny-cuda-nn, you can refer to this [issue](https://github.com/NVlabs/tiny-cuda-nn/issues/245) or this [article](https://zhuanlan.zhihu.com/p/643834111).
 </details>
 
 ### Set up datasets
@@ -52,7 +53,7 @@ PYTHONPATH='.' python lerplanes/main.py --config-path config.yaml
 We use the same evaluation protocol as [EndoNeRF](https://github.com/med-air/EndoNeRF). So please follow the instructions in EndoNeRF.
 
 ## Acknowledgements
-We would like to acknowledge the following inspring work:
+We would like to acknowledge the following inspiring work:
 - [EDSSR](https://arxiv.org/pdf/2107.00229) (Long et al.)
 - [EndoNeRF](https://github.com/med-air/EndoNeRF) (Wang et al.)
 - [K-Planes](https://sarafridov.github.io/K-Planes/) (Fridovich-Keil et al.)
