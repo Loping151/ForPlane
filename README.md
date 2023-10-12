@@ -36,6 +36,19 @@ We notice tiny-cuda-nn is sometimes not compilable on some latest GPUs like RTX4
 <details> <summary>Download the datasets</summary> 
 
 Please download the dataset from [EndoNeRF](https://github.com/med-air/EndoNeRF) 
+
+To use the example config, organize your data like:
+```
+data
+| - endonerf_full_datasets
+|   | - cutting_tissues_twice
+|   | - pushing_soft_tissues
+| - hamlyn_lerplane
+|   | - hamlyn1
+|   | - hamlyn2
+| - YourCustomDatasets
+```
+
 </details>
 
 ### training
@@ -45,7 +58,7 @@ Lerplane uses configs to control the training process. The configs are stored in
 To train a model, run the following command:
 ```
 export CUDA_VISIBLE_DEVICES=0
-PYTHONPATH='.' python lerplanes/main.py --config-path config.yaml
+PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/config/example-9k.py
 ```
 </details>
 

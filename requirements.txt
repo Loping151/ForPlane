@@ -14,3 +14,4 @@ tensorboard
 pytorch-msssim
 imageio[ffmpeg]
 imageio[av]
+ninja

@@ -162,7 +162,7 @@ def _load_endo_depth_image(idx: int,
                            ) -> torch.Tensor:
     f_path = paths[idx]
     # load pred_depth, all values are integers
-    depth = imageio.imread(f_path, ignoregamma=True).astype(np.float32)
+    depth = imageio.imread(f_path, format="PNG-PIL", ignoregamma=True).astype(np.float32)
     if depth.shape[0] != out_h or depth.shape[1] != out_w:
         # use lanczos to resize
         depth = depth.resize((out_w, out_h), Image.LANCZOS)

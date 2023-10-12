@@ -78,7 +78,7 @@ def main():
 
     p.add_argument('--render-only', action='store_true')
     p.add_argument('--validate-only', action='store_true')
-    # p.add_argument('--spacetime-only', action='store_true')
+    p.add_argument('--spacetime-only', action='store_true')
     p.add_argument('--test_speed', action='store_true')
     p.add_argument('--save-train-time-step', action='store_true')
     p.add_argument('--config-path', type=str, required=True)

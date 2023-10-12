@@ -466,7 +466,7 @@ def init_dloader_random(_):
 
 
 def initialize_model(
-        runner: Union['PhototourismTrainer', 'VideoTrainer'],
+        runner: 'VideoTrainer',
         **kwargs) -> LowrankModel:
     """Initialize a `LowrankModel` according to the **kwargs parameters.
 
@@ -478,7 +478,6 @@ def initialize_model(
     Returns:
         Initialized LowrankModel.
     """
-    from .phototourism_trainer import PhototourismTrainer
     extra_args = copy(kwargs)
     extra_args.pop('global_scale', None)
     extra_args.pop('global_translation', None)
@@ -511,7 +510,7 @@ def initialize_model(
         is_contracted=dset.is_contracted,
         global_scale=global_scale,
         global_translation=global_translation,
-        use_appearance_embedding=isinstance(runner, PhototourismTrainer),
+        use_appearance_embedding=False,
         num_images=num_images,
         **extra_args)
     log.info(f"Initialized {model.__class__} model with "
