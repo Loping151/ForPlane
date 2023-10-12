@@ -54,7 +54,7 @@ data
 ### training
 <details> <summary>Using configs for training</summary> 
 
-Lerplane uses configs to control the training process. The configs are stored in the `lerplane/configs` folder.
+Lerplane uses configs to control the training process. The example configs are stored in the `lerplanes/config` folder.
 To train a model, run the following command:
 ```
 export CUDA_VISIBLE_DEVICES=0
