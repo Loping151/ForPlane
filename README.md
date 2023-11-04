@@ -43,7 +43,7 @@ data
 | - endonerf_full_datasets
 |   | - cutting_tissues_twice
 |   | - pushing_soft_tissues
-| - hamlyn_lerplane
+| - hamlyn_forplane
 |   | - hamlyn1
 |   | - hamlyn2
 | - YourCustomDatasets
