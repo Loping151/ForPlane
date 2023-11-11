@@ -95,8 +95,8 @@ class VideoTrainer(BaseTrainer):
         scale_ok = super().train_step(data, **kwargs)
         # if self.global_step in [900,1800,2700,3600]:
         #     self.validate(self.global_step)
-        if self.global_step % 6 == 0:
-            self.validate(video_frame = self.global_step // 6)
+        # if self.global_step % 6 == 0:
+        #     self.validate(video_frame = self.global_step // 6)
         if self.global_step == self.isg_step:
             self.train_dataset.enable_isg()
             raise StopIteration  # Whenever we change the dataset
