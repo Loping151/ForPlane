@@ -1,8 +1,8 @@
 # Forplane
 
 <p>
-<img alt="Static Badge" src="https://img.shields.io/badge/Lerplane-2305.19906-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2305.19906">
-<img alt="Static Badge" src="https://img.shields.io/badge/Forplane-2312.15253-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2312.15253">
+<a href="https://arxiv.org/abs/2305.19906"> <img alt="Static Badge" src="https://img.shields.io/badge/Lerplane-2305.19906-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2305.19906"> </a>
+<a href="https://arxiv.org/abs/2312.15253"> <img alt="Static Badge" src="https://img.shields.io/badge/Forplane-2312.15253-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2312.15253"> </a>
 </p>
 
 
