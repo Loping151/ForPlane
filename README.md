@@ -1,4 +1,10 @@
-# LerPlane
+# Forplane
+
+<p>
+<img alt="Static Badge" src="https://img.shields.io/badge/Lerplane-2305.19906-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2305.19906">
+<img alt="Static Badge" src="https://img.shields.io/badge/Forplane-2312.15253-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2312.15253">
+</p>
+
 
 ### [Paper](https://arxiv.org/pdf/2305.19906.pdf)
 
@@ -7,6 +13,13 @@
 > MICCAI2023, Oral, STAR Award
 
 ![](lerplanes/images/overview.png)
+
+### [Paper](https://arxiv.org/pdf/2312.15253.pdf)
+
+> [Efficient Deformable Tissue Reconstruction via Orthogonal Neural Plane](https://arxiv.org/pdf/2312.15253.pdf) \
+> Chen Yang, Kailing Wang, Yuehao Wang, Qi Dou, Xiaokang Yang, Wei Shen
+
+![](lerplanes/images/overview2.png)
 
 ## Schedule
 - [x] Initial Code Release.
