@@ -10,7 +10,7 @@
 
 > [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/pdf/2305.19906.pdf) \
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
-> MICCAI2023, Oral, STAR Award, Young Scientist Award
+> MICCAI2023, Oral, STAR Award, **Young Scientist Award**
 
 ![](lerplanes/images/overview.png)
 
