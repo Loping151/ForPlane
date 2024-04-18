@@ -1,4 +1,4 @@
-# Forplane
+# Offical Code Implementation for Forplane and Lerplane
 
 <p>
 <a href="https://arxiv.org/abs/2305.19906"> <img alt="Static Badge" src="https://img.shields.io/badge/Lerplane-2305.19906-b31b1b?style=flat&logo=arxiv&logoColor=red&link=https%3A%2F%2Farxiv.org%2Fabs%2F2305.19906"> </a>
@@ -6,25 +6,27 @@
 </p>
 
 
-### [Paper](https://arxiv.org/pdf/2305.19906.pdf)
+### [LerPlane](https://arxiv.org/pdf/2305.19906.pdf)
 
 > [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/pdf/2305.19906.pdf) \
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
-> MICCAI2023, Oral, STAR Award, **Young Scientist Award**
+> MICCAI2023, **Young Scientist Award**
 
 ![](lerplanes/images/overview.png)
 
-### [Paper](https://arxiv.org/pdf/2312.15253.pdf)
+### [Forplane](https://arxiv.org/pdf/2312.15253.pdf)
 
 > [Efficient Deformable Tissue Reconstruction via Orthogonal Neural Plane](https://arxiv.org/pdf/2312.15253.pdf) \
-> Chen Yang, Kailing Wang, Yuehao Wang, Qi Dou, Xiaokang Yang, Wei Shen
+> Chen Yang, Kailing Wang, Yuehao Wang, Qi Dou, Xiaokang Yang, Wei Shen \
+> TMI2024
 
 ![](lerplanes/images/overview2.png)
 
 ## Schedule
 - [x] Initial Code Release.
 - [x] Further check of the reproducibility.
-- [ ] The code release for the extended version with Hamlyn Dataset(coming soon).
+- [ ] Code Refactoring and Realease of the final version.
+- [ ] Hamlyn Dataset.
 
 ## Introduction
 Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enabling the use of lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
@@ -88,7 +90,7 @@ Big thanks to [NeRFAcc](https://www.nerfacc.com/) (Li et al.) for their efficien
 
 ## Citation
 
-If you find this code useful for your research, please use the following BibTeX entry
+If you find this code useful for your research, please use the following BibTeX entries:
 
 ```
 @inproceedings{yang2023neural,
@@ -98,5 +100,15 @@ If you find this code useful for your research, please use the following BibTeX 
   pages={46--56},
   year={2023},
   organization={Springer}
+}
+```
+and
+```
+@article{yang2024efficient,
+  title={Efficient deformable tissue reconstruction via orthogonal neural plane},
+  author={Yang, Chen and Wang, Kailing and Wang, Yuehao and Dou, Qi and Yang, Xiaokang and Shen, Wei},
+  journal={IEEE Transactions on Medical Imaging},
+  year={2024},
+  publisher={IEEE}
 }
 ```
