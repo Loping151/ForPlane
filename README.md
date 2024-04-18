@@ -10,7 +10,7 @@
 
 > [LerPlane: Neural Representations for Fast 4D Reconstruction of Deformable Tissues](https://arxiv.org/pdf/2305.19906.pdf) \
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
-> MICCAI2023, Oral, STAR Award
+> MICCAI2023, Oral, STAR Award, Young Scientist Award
 
 ![](lerplanes/images/overview.png)
 
@@ -24,7 +24,7 @@
 ## Schedule
 - [x] Initial Code Release.
 - [x] Further check of the reproducibility.
-- [ ] The code release for the extended version (with Hamlyn Dataset).
+- [ ] The code release for the extended version with Hamlyn Dataset(coming soon).
 
 ## Introduction
 Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enabling the use of lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
@@ -91,10 +91,12 @@ Big thanks to [NeRFAcc](https://www.nerfacc.com/) (Li et al.) for their efficien
 If you find this code useful for your research, please use the following BibTeX entry
 
 ```
-@article{yang2023neural,
-  title={Neural LerPlane Representations for Fast 4D Reconstruction of Deformable Tissues},
+@inproceedings{yang2023neural,
+  title={Neural lerplane representations for fast 4d reconstruction of deformable tissues},
   author={Yang, Chen and Wang, Kailing and Wang, Yuehao and Yang, Xiaokang and Shen, Wei},
-  journal={MICCAI},
-  year={2023}
+  booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
+  pages={46--56},
+  year={2023},
+  organization={Springer}
 }
 ```
