@@ -71,7 +71,7 @@ data
 ### training
 <details> <summary>Using configs for training</summary> 
 
-Ferplane uses configs to control the training process. The example configs are stored in the `lerplanes/config` folder. To run Lerplane, you need to modify the config according the paper, but we recommend you to use Forplane.
+Ferplane uses configs to control the training process. The example configs are stored in the `lerplanes/config` folder. To run Lerplane, you need to modify the config according to the paper, but we recommend you use Forplane.
 To train a model, run the following command:
 ```
 export CUDA_VISIBLE_DEVICES=0
