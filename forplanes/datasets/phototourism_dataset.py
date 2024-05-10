@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 import torch
 
-from lerplanes.datasets.base_dataset import BaseDataset
-from lerplanes.datasets.intrinsics import Intrinsics
-from lerplanes.datasets.ray_utils import average_poses
-from lerplanes.ops.image.io import read_png
+from forplanes.datasets.base_dataset import BaseDataset
+from forplanes.datasets.intrinsics import Intrinsics
+from forplanes.datasets.ray_utils import average_poses
+from forplanes.ops.image.io import read_png
 
 
 class PhototourismScenes(Enum):

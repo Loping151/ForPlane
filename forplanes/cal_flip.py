@@ -15,7 +15,7 @@ import tempfile
 import numpy as np
 import imageio.v2 as imageio
 import cv2
-from lerplanes.ops.image import metrics
+from forplanes.ops.image import metrics
 
 @staticmethod
 def common_sort(name_list):

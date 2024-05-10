@@ -12,7 +12,7 @@ import imageio.v3 as iio
 import imageio
 import numpy as np
 
-from lerplanes.utils.my_tqdm import tqdm
+from forplanes.utils.my_tqdm import tqdm
 
 pil2tensor = torchvision.transforms.ToTensor()
 # increase ulimit -n (number of open files) otherwise parallel loading might fail

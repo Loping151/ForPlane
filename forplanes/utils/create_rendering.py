@@ -8,10 +8,10 @@ import torch
 import numpy as np
 import time
 
-from lerplanes.models.lowrank_model import LowrankModel
-from lerplanes.utils.my_tqdm import tqdm
-from lerplanes.ops.image.io import write_video_to_file
-from lerplanes.runners.video_trainer import VideoTrainer
+from forplanes.models.lowrank_model import LowrankModel
+from forplanes.utils.my_tqdm import tqdm
+from forplanes.ops.image.io import write_video_to_file
+from forplanes.runners.video_trainer import VideoTrainer
 
 
 @torch.no_grad()

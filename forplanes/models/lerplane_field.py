@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 import tinycudann as tcnn
 
-from lerplanes.ops.interpolation import grid_sample_wrapper
-from lerplanes.raymarching.spatial_distortions import SpatialDistortion
+from forplanes.ops.interpolation import grid_sample_wrapper
+from forplanes.raymarching.spatial_distortions import SpatialDistortion
 
 
 def get_normalized_directions(directions):
@@ -188,6 +188,7 @@ class LerplaneField(nn.Module):
                 self.pt_encoded_dim += encode_length * 2 * \
                     self.encode_info.get('n_frequencies', 2)
             elif self.encode_info.get('encoder_type') == 'OneBlob':
+                # one blob encoding, for each dimension, we have n_bins
                 self.pt_encoder = tcnn.Encoding(
                     n_input_dims=encode_length,
                     encoding_config={

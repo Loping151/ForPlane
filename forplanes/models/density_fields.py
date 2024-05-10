@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import tinycudann as tcnn
 
-from lerplanes.models.lerplane_field import interpolate_ms_features, normalize_aabb, init_grid_param
-from lerplanes.raymarching.spatial_distortions import SpatialDistortion
+from forplanes.models.lerplane_field import interpolate_ms_features, normalize_aabb, init_grid_param
+from forplanes.raymarching.spatial_distortions import SpatialDistortion
 
 
 class lerplaneDensityField(nn.Module):

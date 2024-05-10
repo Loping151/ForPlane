@@ -14,7 +14,7 @@ from typing import List, Dict, Any
 import tempfile
 import numpy as np
 import imageio.v2 as imageio
-from lerplanes.ops.image import metrics
+from forplanes.ops.image import metrics
 import lpips
 
 @staticmethod

@@ -8,12 +8,12 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-from lerplanes.datasets import VideoEndoDataset, VideoHamlynDataset
-from lerplanes.utils.ema import EMA
-from lerplanes.utils.my_tqdm import tqdm
-from lerplanes.ops.image import metrics
-from lerplanes.ops.image.io import write_video_to_file
-from lerplanes.models.lowrank_model import LowrankModel
+from forplanes.datasets import VideoEndoDataset, VideoHamlynDataset
+from forplanes.utils.ema import EMA
+from forplanes.utils.my_tqdm import tqdm
+from forplanes.ops.image import metrics
+from forplanes.ops.image.io import write_video_to_file
+from forplanes.models.lowrank_model import LowrankModel
 from .base_trainer import BaseTrainer, init_dloader_random, initialize_model
 from .regularization import (
     PlaneTV, TimeSmoothness, HistogramLoss, L1TimePlanes, DistortionLoss, DepthLossHuber, MonoDepthLoss
@@ -399,6 +399,7 @@ def init_test_data(data_dir, split, **kwargs):
     else:
         downsample = 2.0
 
+    # just merge the two cases for now
     if 'endo' in data_dir or 'hamlyn' in data_dir:
         ts_dset = VideoEndoDataset(
             data_dir, split=split, downsample=downsample,

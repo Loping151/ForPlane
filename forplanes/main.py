@@ -12,9 +12,9 @@ import numpy as np
 import torch
 import torch.utils.data
 
-from lerplanes.runners import video_trainer
-from lerplanes.utils.create_rendering import render_speed, render_to_path
-from lerplanes.utils.parse_args import parse_optfloat
+from forplanes.runners import video_trainer
+from forplanes.utils.create_rendering import render_speed, render_to_path
+from forplanes.utils.parse_args import parse_optfloat
 
 
 def seed_everything(seed):
@@ -55,7 +55,7 @@ def load_data(data_downsample, data_dirs, validate_only: bool, render_only: bool
 
 
 def init_trainer(**kwargs):
-    from lerplanes.runners import video_trainer
+    from forplanes.runners import video_trainer
     return video_trainer.VideoTrainer(**kwargs)
 
 
@@ -100,7 +100,7 @@ def main():
 
     # Process overrides from argparse into config
     # overrides can be passed from the command line as key=value pairs. E.g.
-    # python lerplanes/main.py --config-path lerplanes/config/cfg.py max_ts_frames=200
+    # python forplanes/main.py --config-path forplanes/config/cfg.py max_ts_frames=200
     # note that all values are strings, so code should assume incorrect data-types for anything
     # that's derived from config - and should not a string.
 

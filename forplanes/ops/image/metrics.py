@@ -169,7 +169,7 @@ def flip(pred_frames: List[np.ndarray], gt_frames: List[np.ndarray], interval: i
             write_png(pred_fname, pred_frames[i])
             write_png(gt_fname, gt_frames[i])
             result = subprocess.check_output(
-                ['python', 'lerplanes/ops/flip/flip.py', '--reference', gt_fname, '--test', pred_fname]
+                ['python', 'forplanes/ops/flip/flip.py', '--reference', gt_fname, '--test', pred_fname]
             ).decode()
             all_results.append(extract_from_result(result, r'Mean: (\d+\.\d+)'))
     return sum(all_results) / len(all_results)

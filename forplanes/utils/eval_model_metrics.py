@@ -7,8 +7,8 @@ from collections import defaultdict
 import numpy as np
 import torch
 
-from lerplanes.ops.image import metrics
-from lerplanes.ops.image.io import read_mp4, read_png
+from forplanes.ops.image import metrics
+from forplanes.ops.image.io import read_mp4, read_png
 
 
 def eval_static_metrics(static_dir):

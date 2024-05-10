@@ -4,9 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def convert_logs(logs_path, save=None):
-    # load log file, exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq1/endo_log.txt
-    # {'psnr': [33.371252644856774], 'ssim': [0.9291370717684427], 'lpips': [0.12446547845999399], 'masked_psnr': [32.76124434153239], 'FLIP': [0.09649633333333335]}
-    # load this file to format a dict
     performance = {}
     with open(logs_path, 'r') as f:
         for line in f:
@@ -42,5 +39,3 @@ if __name__ == "__main__":
     
     for i in tgt_path:
         convert_logs(i, save=True)
-    # pf = convert_logs('./exps/lerplane/hamlyn_32k_gt_dp/hamlyn_seq1/endo_log.txt', save=True)
-    # print(pf)

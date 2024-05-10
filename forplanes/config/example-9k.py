@@ -1,8 +1,8 @@
 config = {
     'description': 'iter9k',
 
-    'expname': 'hamlyn1_9k',
-    'logdir': './exps/hamlyn_9k_gt_depth',
+    'expname': 'endo_cutting_9k',
+    'logdir': './exps/endonerf_9k',
     'device': 'cuda:0',
 
     'data_downsample': 1.0,
@@ -34,7 +34,7 @@ config = {
     'occ_level': 2,
     'occ_alpha_thres': 1e-2,
     # Regularization
-    # 'distortion_loss_weight': 0.001, [yc: 2.20 remove dist loss for better scene recon]
+    # 'distortion_loss_weight': 0.00
     'distortion_loss_weight': 0.0,
     'histogram_loss_weight': 1.0,
     'mono_depth_weight': 0, 
@@ -91,6 +91,3 @@ config = {
         }
     ],
 }
-
-# exit()
-# PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/hamlyn/debug_hamlyn.py

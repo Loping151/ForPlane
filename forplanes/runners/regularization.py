@@ -9,10 +9,10 @@ import torch.optim.lr_scheduler
 from torch import nn
 import torch.nn.functional as F
 
-from lerplanes.models.lowrank_model import LowrankModel
-from lerplanes.ops.losses.histogram_loss import interlevel_loss
-from lerplanes.ops.losses.monodepth_loss import ScaleAndShiftInvariantLoss
-from lerplanes.raymarching.ray_samplers import RaySamples
+from forplanes.models.lowrank_model import LowrankModel
+from forplanes.ops.losses.histogram_loss import interlevel_loss
+from forplanes.ops.losses.monodepth_loss import ScaleAndShiftInvariantLoss
+from forplanes.raymarching.ray_samplers import RaySamples
 
 @torch.jit.script
 def compute_plane_tv(t: torch.Tensor):

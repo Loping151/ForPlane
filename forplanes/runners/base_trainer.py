@@ -11,14 +11,14 @@ import torch
 import torch.utils.data
 from torch.utils.tensorboard import SummaryWriter
 
-from lerplanes.utils.timer import CudaTimer
-from lerplanes.utils.ema import EMA
-from lerplanes.models.lowrank_model import LowrankModel
-from lerplanes.utils.my_tqdm import tqdm
-from lerplanes.ops.image import metrics
-from lerplanes.ops.image.io import write_png
-from lerplanes.runners.regularization import Regularizer
-from lerplanes.ops.lr_scheduling import (
+from forplanes.utils.timer import CudaTimer
+from forplanes.utils.ema import EMA
+from forplanes.models.lowrank_model import LowrankModel
+from forplanes.utils.my_tqdm import tqdm
+from forplanes.ops.image import metrics
+from forplanes.ops.image.io import write_png
+from forplanes.runners.regularization import Regularizer
+from forplanes.ops.lr_scheduling import (
     get_cosine_schedule_with_warmup, get_step_schedule_with_warmup
 )
 # from torch.profiler import profile, record_function, ProfilerActivity

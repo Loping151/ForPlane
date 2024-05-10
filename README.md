@@ -12,7 +12,7 @@
 > Chen Yang, Kailing Wang, Yuehao Wang, Xiaokang Yang, Wei Shen \
 > MICCAI2023, **Young Scientist Award**
 
-![](lerplanes/images/overview.png)
+![](forplanes/images/overview.png)
 
 ### [Forplane](https://arxiv.org/pdf/2312.15253.pdf)
 
@@ -20,20 +20,24 @@
 > Chen Yang, Kailing Wang, Yuehao Wang, Qi Dou, Xiaokang Yang, Wei Shen \
 > TMI2024
 
-![](lerplanes/images/overview2.png)
+![](forplanes/images/overview2.jpeg)
 
 ## Schedule
 - [x] Initial Code Release of Lerplane.
 - [x] Further check of the reproducibility.
 - [x] Hamlyn Dataset.
-- [ ] Code release for Forplane code. We are trying to merge the code of Forplane and Lerplane into same repo.
+- [x] Code clean and release for Forplane.
+- [x] All the released code is tested on Ubuntu 22.04, Python 3.9, Pytorch 1.13.1, CUDA 11.7.
 
-## Introduction
-Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enabling the use of lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications.
+## Guidelines
+This is the code repo for the paper "**LerPlane**: Neural Representations for Fast 4D Reconstruction of Deformable Tissues" and "**Forplane**: Efficient Deformable Tissue Reconstruction via Orthogonal Neural Plane". Since the Forplane is qualitatively and faster than Lerplane, we recommend you to use Forplane for your research, which is also the default setting in this repo. But if you want to reproduce the performance of Lerplane, you may modify the config file in the `forplanes/config` folder. For the dataset, please refer to the Instructions-Set up datasets section below. For the evaluation setting, please refer to the Instructions-Evaluation section below. 
+
+<!-- ## Introduction
+Reconstructing deformable tissues from endoscopic stereo videos in robotic surgery is crucial for various clinical applications. However, existing methods relying only on implicit representations are computationally expensive and require dozens of hours, which limits further practical applications. To address this challenge, we introduce LerPlane, a novel method for fast and accurate reconstruction of surgical scenes under a single-viewpoint setting. LerPlane treats surgical procedures as 4D volumes and factorizes them into explicit 2D planes of static and dynamic fields, leading to a compact memory footprint and significantly accelerated optimization. The efficient factorization is accomplished by fusing features obtained through linear interpolation of each plane and enabling the use of lightweight neural networks to model surgical scenes. Besides, LerPlane shares static fields, significantly reducing the workload of dynamic tissue modeling. We also propose a novel sample scheme to boost optimization and improve performance in regions with tool occlusion and large motions. Experiments on DaVinci robotic surgery videos demonstrate that LerPlane accelerates optimization by over 100× while maintaining high quality across various non-rigid deformations, showing significant promise for future intraoperative surgery applications. -->
 
 [http://loping151.top/images/trainging_speed_vs_endo.mp4](https://user-images.githubusercontent.com/97866915/274361556-3cdcd11b-3bb1-46a4-bd01-c5e9de160828.mp4)
 
-## Installation
+## Instructions
 
 ### Set up the Python environment
 <details> <summary>Tested with an Ubuntu workstation i9-12900K, 3090GPU.</summary>
@@ -66,16 +70,19 @@ data
 | - YourCustomDatasets
 ```
 
+If you want to generate your own dataset, we strongly recommend you to undisort the images first since most endoscopic images are distorted. You can use the `cv2.undistort` function in OpenCV to do this. And we also recommend you to use video-based SAM model to generate the masks of instruments for consistency.
+
+
 </details>
 
 ### training
 <details> <summary>Using configs for training</summary> 
 
-Ferplane uses configs to control the training process. The example configs are stored in the `lerplanes/config` folder. To run Lerplane, you need to modify the config according to the paper, but we recommend you use Forplane.
+Ferplane uses configs to control the training process. The example configs are stored in the `forplanes/config` folder. To run Lerplane, you need to modify the config according to the paper, but we recommend you use Forplane.
 To train a model, run the following command:
 ```
 export CUDA_VISIBLE_DEVICES=0
-PYTHONPATH='.' python lerplanes/main.py --config-path lerplanes/config/example-9k.py
+PYTHONPATH='.' python forplanes/main.py --config-path forplanes/config/example-9k.py
 ```
 </details>
 

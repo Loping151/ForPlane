@@ -93,4 +93,4 @@ config = {
 }
 
 # exit()
-# PYTHONPATH=. python lerplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/lerplanes/configs/hamlyn/debug_hamlyn.py
+# PYTHONPATH=. python forplanes/main.py --config-path /home/yangchen/projects/kplanes-endo/forplanes/configs/hamlyn/debug_hamlyn.py
