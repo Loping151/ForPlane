@@ -56,7 +56,7 @@ We notice tiny-cuda-nn is sometimes not compilable on some latest GPUs like RTX4
 
 Please download the dataset from [EndoNeRF](https://github.com/med-air/EndoNeRF) 
 
-Download the Hamlyn dataset used in Forplane: [hamlyn_forplane](https://download.loping151.com/filelist/hamlyn_forplane)
+Download the Hamlyn dataset used in Forplane: [hamlyn_forplane](https://download.loping151.com/hamlyn_forplane)
 
 To use the example config, organize your data like:
 ```
