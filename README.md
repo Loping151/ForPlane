@@ -75,7 +75,7 @@ If you want to generate your own dataset, we strongly recommend you to undisort 
 
 </details>
 
-### training
+### Training
 <details> <summary>Using configs for training</summary> 
 
 Ferplane uses configs to control the training process. The example configs are stored in the `forplanes/config` folder. To run Lerplane, you need to modify the config according to the paper, but we recommend you use Forplane.
